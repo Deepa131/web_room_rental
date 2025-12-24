@@ -24,7 +24,6 @@ export default function Header() {
       >
         <div className="flex h-16 items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] w-full">
 
-          {/* Left: Logo */}
           <div className="flex items-center gap-2">
             <Link href="/" className="flex items-center gap-2 group">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-blue-600 text-white font-semibold">
@@ -36,7 +35,6 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Center: Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6 justify-self-center">
             {NAV_LINKS.map((link) => (
               <Link
@@ -54,7 +52,6 @@ export default function Header() {
             ))}
           </div>
 
-          {/* Right: Auth Actions + Theme Toggle */}
           <div className="flex items-center gap-2 md:justify-self-end">
             <div className="hidden sm:flex items-center gap-2">
               <Link
@@ -71,10 +68,8 @@ export default function Header() {
               </Link>
             </div>
 
-            {/* Theme Toggle */}
             <ThemeToggle />
 
-            {/* Mobile Menu Button */}
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
@@ -83,7 +78,6 @@ export default function Header() {
               className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md border border-black/10 dark:border-white/15 hover:bg-foreground/5 transition-colors"
             >
               {open ? (
-                // Close icon
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -97,7 +91,6 @@ export default function Header() {
                   />
                 </svg>
               ) : (
-                // Hamburger icon
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -115,7 +108,6 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
         <div
           className={
             "md:hidden overflow-hidden transition-[max-height] duration-300 " +
