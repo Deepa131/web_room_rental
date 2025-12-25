@@ -30,7 +30,6 @@ export default function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit(submit)} className="w-full space-y-5">
-      {/* Full Name */}
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700">
           Full Name
@@ -46,7 +45,6 @@ export default function RegisterForm() {
         )}
       </div>
 
-      {/* Email */}
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700">
           Email Address
@@ -62,7 +60,6 @@ export default function RegisterForm() {
         )}
       </div>
 
-      {/* Password */}
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700">
           Password
@@ -78,7 +75,6 @@ export default function RegisterForm() {
         )}
       </div>
 
-      {/* Confirm Password */}
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700">
           Confirm Password
@@ -96,7 +92,6 @@ export default function RegisterForm() {
         )}
       </div>
 
-      {/* Submit */}
       <button
         type="submit"
         disabled={isSubmitting || pending}
