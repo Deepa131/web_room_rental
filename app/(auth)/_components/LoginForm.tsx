@@ -41,8 +41,7 @@ export default function LoginForm() {
           type="email"
           placeholder="eg. deepa@gmail.com"
           className="h-10 w-full rounded-lg border border-gray-300 px-4 text-sm text-black placeholder-gray-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          {...register("email")}
-        />
+          {...register("email")}/>
         {errors.email && (
           <p className="text-xs text-red-600">{errors.email.message}</p>
         )}
@@ -58,14 +57,12 @@ export default function LoginForm() {
             type={showPassword ? "text" : "password"}
             placeholder="••••••••"
             className="h-10 w-full rounded-lg border border-gray-300 px-4 pr-10 text-sm text-black placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            {...register("password")}
-          />
+            {...register("password")}/>
 
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-3 flex items-center text-gray-600 hover:text-gray-900"
-          >
+            className="absolute inset-y-0 right-3 flex items-center text-gray-600 hover:text-gray-900">
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
@@ -79,8 +76,7 @@ export default function LoginForm() {
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
-            className="h-4 w-4 rounded accent-blue-500"
-          />
+            className="h-4 w-4 rounded accent-blue-500"/>
           <span className="text-gray-700">Remember Me</span>
         </label>
 
@@ -92,8 +88,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={isSubmitting || pending}
-        className="h-10 w-full rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 disabled:opacity-60"
-      >
+        className="h-10 w-full rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 disabled:opacity-60">
         {isSubmitting || pending ? "Logging in..." : "Log in"}
       </button>
 
@@ -101,8 +96,7 @@ export default function LoginForm() {
         Don&apos;t have an account?{" "}
         <Link
           href="/register"
-          className="font-semibold text-blue-500 hover:underline"
-        >
+          className="font-semibold text-blue-500 hover:underline">
           Sign up
         </Link>
       </p>

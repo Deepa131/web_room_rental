@@ -41,8 +41,7 @@ export default function LoginPage() {
                   role === "renter"
                     ? "bg-blue-500 text-white"
                     : "text-gray-700 hover:bg-gray-200"
-                }`}
-              >
+                }`}>
                 Renter
               </button>
               <button
@@ -52,8 +51,7 @@ export default function LoginPage() {
                   role === "owner"
                     ? "bg-blue-500 text-white"
                     : "text-gray-700 hover:bg-gray-200"
-                }`}
-              >
+                }`}>
                 House Owner
               </button>
             </div>

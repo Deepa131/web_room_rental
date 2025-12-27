@@ -38,8 +38,7 @@ export default function RegisterForm() {
           type="text"
           placeholder="Deepa Paudel"
           className="h-10 w-full rounded-lg border border-gray-300 px-4 text-sm text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          {...register("name")}
-        />
+          {...register("name")}/>
         {errors.name && (
           <p className="text-xs text-red-600">{errors.name.message}</p>
         )}
@@ -53,8 +52,7 @@ export default function RegisterForm() {
           type="email"
           placeholder="eg. deepa@gmail.com"
           className="h-10 w-full rounded-lg border border-gray-300 px-4 text-sm text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          {...register("email")}
-        />
+          {...register("email")}/>
         {errors.email && (
           <p className="text-xs text-red-600">{errors.email.message}</p>
         )}
@@ -68,8 +66,7 @@ export default function RegisterForm() {
           type="password"
           placeholder="••••••••"
           className="h-10 w-full rounded-lg border border-gray-300 px-4 text-sm text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          {...register("password")}
-        />
+          {...register("password")}/>
         {errors.password && (
           <p className="text-xs text-red-600">{errors.password.message}</p>
         )}
@@ -83,8 +80,7 @@ export default function RegisterForm() {
           type="password"
           placeholder="••••••••"
           className="h-10 w-full rounded-lg border border-gray-300 px-4 text-sm text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          {...register("confirmPassword")}
-        />
+          {...register("confirmPassword")}/>
         {errors.confirmPassword && (
           <p className="text-xs text-red-600">
             {errors.confirmPassword.message}
@@ -95,8 +91,7 @@ export default function RegisterForm() {
       <button
         type="submit"
         disabled={isSubmitting || pending}
-        className="h-10 w-full rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 disabled:opacity-60"
-      >
+        className="h-10 w-full rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 disabled:opacity-60">
         {isSubmitting || pending ? "Creating account..." : "Sign up"}
       </button>
 
@@ -104,8 +99,7 @@ export default function RegisterForm() {
         Already have an account?{" "}
         <Link
           href="/login"
-          className="font-semibold text-blue-500 hover:underline"
-        >
+          className="font-semibold text-blue-500 hover:underline">
           Log in
         </Link>
       </p>
