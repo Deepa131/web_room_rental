@@ -7,11 +7,13 @@ import { useTransition, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoginData, loginSchema } from "../schema";
 import { Eye, EyeOff } from "lucide-react";
+import { handleLogin } from "@/lib/actions/auth-action";
 
 export default function LoginForm() {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
@@ -23,11 +25,17 @@ export default function LoginForm() {
   });
 
   const submit = async (values: LoginData) => {
+    setError(null);
     startTransition(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Login:", values);
-
-      router.push("/dashboard");
+      try {
+        const response = await handleLogin(values);
+        if (!response.success) {
+          throw new Error(response.message);
+        }
+        router.push("/dashboard");
+      } catch (err: Error | any) {
+        setError(err.message || "Login failed");
+      }
     });
   };
 
