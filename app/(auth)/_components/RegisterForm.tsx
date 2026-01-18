@@ -3,13 +3,15 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RegisterData, registerSchema } from "../schema";
+import { handleRegister } from "@/lib/actions/auth-action";
 
 export default function RegisterForm() {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
@@ -21,22 +23,30 @@ export default function RegisterForm() {
   });
 
   const submit = async (values: RegisterData) => {
+    setError(null);
     startTransition(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Register:", values);
-      router.push("/login");
+      try {
+        const response = await handleRegister(values);
+        if (!response.success) {
+          throw new Error(response.message);
+        }
+        router.push("/login");
+      } catch (err: Error | any) {
+        setError(err.message || "Registration failed");
+      }
     });
   };
 
   return (
     <form onSubmit={handleSubmit(submit)} className="w-full space-y-5">
+      {error && <p className="text-sm text-red-600 text-center">{error}</p>}
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700">
           Full Name
         </label>
         <input
           type="text"
-          placeholder="Deepa Paudel"
+          placeholder="Enter full name"
           className="h-10 w-full rounded-lg border border-gray-300 px-4 text-sm text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           {...register("name")}/>
         {errors.name && (
@@ -50,7 +60,7 @@ export default function RegisterForm() {
         </label>
         <input
           type="email"
-          placeholder="eg. deepa@gmail.com"
+          placeholder="Enter your email"
           className="h-10 w-full rounded-lg border border-gray-300 px-4 text-sm text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           {...register("email")}/>
         {errors.email && (

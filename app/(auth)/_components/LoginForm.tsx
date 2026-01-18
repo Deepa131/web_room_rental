@@ -41,13 +41,16 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit(submit)} className="w-full space-y-5">
+      {error && (
+        <p className="text-sm text-red-600 text-center">{error}</p>
+      )}
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700">
           Email Address
         </label>
         <input
           type="email"
-          placeholder="eg. deepa@gmail.com"
+          placeholder="Enter email"
           className="h-10 w-full rounded-lg border border-gray-300 px-4 text-sm text-black placeholder-gray-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           {...register("email")}/>
         {errors.email && (
