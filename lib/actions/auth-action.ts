@@ -4,7 +4,7 @@ import { LoginData, RegisterData } from "@/app/(auth)/schema"
 import { setAuthToken, setUserData, clearAuthCookies } from "../cookie"
 import { redirect } from "next/navigation";
 
-export const handleRegister = async (data: RegisterData) => {
+export const handleRegister = async (data: RegisterData & {role: string}) => {
     try {
         const response = await register(data)
         if (response.success) {

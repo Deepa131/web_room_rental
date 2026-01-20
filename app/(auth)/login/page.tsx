@@ -1,11 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
 import LoginForm from "../_components/LoginForm";
 
 export default function LoginPage() {
-  const [role, setRole] = useState<"renter" | "owner">("renter");
   return (
     <div className="h-screen w-screen overflow-hidden">
       <div className="grid h-full w-full grid-cols-2">
@@ -32,29 +30,6 @@ export default function LoginPage() {
             <p className="mb-6 text-sm text-gray-600">
               Login to your account to continue
             </p>
-
-            <div className="mb-6 inline-flex w-full rounded-lg bg-gray-100 p-1">
-              <button
-                type="button"
-                onClick={() => setRole("renter")}
-                className={`flex-1 rounded py-2 text-center text-sm font-semibold transition-colors ${
-                  role === "renter"
-                    ? "bg-blue-500 text-white"
-                    : "text-gray-700 hover:bg-gray-200"
-                }`}>
-                Renter
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole("owner")}
-                className={`flex-1 rounded py-2 text-center text-sm font-semibold transition-colors ${
-                  role === "owner"
-                    ? "bg-blue-500 text-white"
-                    : "text-gray-700 hover:bg-gray-200"
-                }`}>
-                House Owner
-              </button>
-            </div>
 
             <LoginForm />
           </div>

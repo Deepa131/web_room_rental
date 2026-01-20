@@ -1,9 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import RegisterForm from "../_components/RegisterForm";
 
 export default function RegisterPage() {
+  const [role, setRole] = useState<"renter" | "owner">("renter");
+
   return (
     <div className="h-screen w-screen overflow-hidden">
       <div className="grid h-full w-full grid-cols-2">
@@ -26,14 +29,37 @@ export default function RegisterPage() {
               <span className="text-xl font-bold text-black">RentEasy</span>
             </div>
 
-            <h1 className="mb-2 text-3xl font-bold text-black">
-              Register
-            </h1>
+            <h1 className="mb-2 text-3xl font-bold text-black">Register</h1>
             <p className="mb-6 text-sm text-gray-600">
               Create an account to continue
             </p>
 
-            <RegisterForm />
+            <div className="mb-6 inline-flex w-full rounded-lg bg-gray-100 p-1">
+              <button
+                type="button"
+                onClick={() => setRole("renter")}
+                className={`flex-1 rounded py-2 text-center text-sm font-semibold transition-colors ${
+                  role === "renter"
+                    ? "bg-blue-500 text-white"
+                    : "text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                Renter
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole("owner")}
+                className={`flex-1 rounded py-2 text-center text-sm font-semibold transition-colors ${
+                  role === "owner"
+                    ? "bg-blue-500 text-white"
+                    : "text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                House Owner
+              </button>
+            </div>
+
+            <RegisterForm role={role}/>
           </div>
         </div>
       </div>
