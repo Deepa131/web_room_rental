@@ -32,7 +32,8 @@ export const handleLogin = async (data: LoginData) => {
             return {
                 success: true,
                 message: 'Login successful',
-                data: response.data
+                data: response.data,
+                token: response.token  // Return token so client can store it
             }
         }
         return {

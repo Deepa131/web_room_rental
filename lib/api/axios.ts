@@ -7,6 +7,34 @@ const axiosInstance = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    withCredentials: true,
 });
+
+// Add request interceptor to include auth token from cookies
+axiosInstance.interceptors.request.use(
+    (config) => {
+        // Get token from localStorage
+        if (typeof window !== 'undefined') {
+            const localToken = localStorage.getItem('auth_token');
+            
+            if (localToken) {
+                config.headers.Authorization = `Bearer ${localToken}`;
+                console.log('Token found in localStorage, setting Authorization header');
+            } else {
+                console.log('No token found in localStorage');
+            }
+        }
+        
+        // If sending FormData, remove Content-Type header so axios sets it with boundary
+        if (config.data instanceof FormData) {
+            delete config.headers['Content-Type'];
+        }
+        
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
 
 export default axiosInstance;
