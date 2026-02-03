@@ -32,7 +32,20 @@ export default function LoginForm() {
         if (!response.success) {
           throw new Error(response.message);
         }
-        router.push("/dashboard");
+        
+        // Store token in localStorage for axios interceptor
+        if (typeof window !== 'undefined' && response.token) {
+          localStorage.setItem('auth_token', response.token);
+          console.log('Token stored in localStorage from login response');
+        }
+        
+        // Redirect to appropriate dashboard based on user role
+        const userRole = response.data?.role;
+        if (userRole === "owner") {
+          router.push("/admin/dashboard");
+        } else {
+          router.push("/renter/dashboard");
+        }
       } catch (err: Error | any) {
         setError(err.message || "Login failed");
       }
