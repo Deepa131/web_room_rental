@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { handleLogout } from "@/lib/actions/auth-action";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X, LogOut, User, BarChart3, Plus, Home, Clock } from "lucide-react";
 
 interface DashboardHeaderProps {
@@ -15,6 +15,45 @@ interface DashboardHeaderProps {
 export default function DashboardHeader({ userRole, userName, profilePicture }: DashboardHeaderProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentProfilePicture, setCurrentProfilePicture] = useState(profilePicture);
+  const isAdmin = userRole === "admin";
+  const roleLabel = userRole === "admin" ? "Admin" : userRole;
+  const dashboardHref = userRole === "admin"
+    ? "/admin/dashboard"
+    : userRole === "owner"
+      ? "/owner/dashboard"
+      : "/renter/dashboard";
+
+  // Listen for profile picture updates from localStorage
+  useEffect(() => {
+    const updateProfilePicture = () => {
+      const userData = localStorage.getItem('user_data');
+      if (userData) {
+        try {
+          const parsed = JSON.parse(userData);
+          if (parsed.profilePicture) {
+            setCurrentProfilePicture(parsed.profilePicture);
+          }
+        } catch (e) {
+          // Failed to parse user data
+        }
+      }
+    };
+
+    // Initial load
+    updateProfilePicture();
+
+    // Listen for storage events (updates from other tabs)
+    window.addEventListener('storage', updateProfilePicture);
+
+    // Listen for custom event (updates from same tab)
+    window.addEventListener('profilePictureUpdated', updateProfilePicture);
+
+    return () => {
+      window.removeEventListener('storage', updateProfilePicture);
+      window.removeEventListener('profilePictureUpdated', updateProfilePicture);
+    };
+  }, []);
 
   const getInitials = (name?: string) => {
     if (!name) return "U";
@@ -26,23 +65,25 @@ export default function DashboardHeader({ userRole, userName, profilePicture }: 
   };
 
   const getProfileImageUrl = () => {
-    if (!profilePicture) return null;
-    let imageUrl = profilePicture;
+    if (!currentProfilePicture) return null;
+    let imageUrl = currentProfilePicture;
     
-    if (imageUrl.includes('/public/')) {
-      imageUrl = imageUrl.replace('/public/', '/');
+    // Ensure /public/ prefix exists for static file serving
+    if (!imageUrl.startsWith('/public/') && !imageUrl.startsWith('http')) {
+      imageUrl = `/public/${imageUrl.replace(/^\//, '')}`;
     }
     
     if (!imageUrl.startsWith('http')) {
       const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5050';
-      imageUrl = `${apiBaseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+      imageUrl = `${apiBaseUrl}${imageUrl}`;
     }
     
     return imageUrl;
   };
 
   const navItems = [
-    { label: "Dashboard", href: userRole === "owner" ? "/admin/dashboard" : "/renter/dashboard", roles: ["renter", "owner"] },
+    { label: "Dashboard", href: dashboardHref, roles: ["renter", "owner", "admin"] },
+    { label: "Create User", href: "/admin/users/create", roles: ["admin"] },
     { label: "Add Room", href: "/add-room", roles: ["owner"] },
     { label: "My Listings", href: "/my-listings", roles: ["owner"] },
     { label: "Appointments", href: "/appointments", roles: ["owner"] },
@@ -59,7 +100,7 @@ export default function DashboardHeader({ userRole, userName, profilePicture }: 
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <Link href={userRole === "owner" ? "/admin/dashboard" : "/renter/dashboard"} className="flex items-center gap-2 group">
+              <Link href={dashboardHref} className="flex items-center gap-2 group">
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 text-white font-bold text-sm shadow-md group-hover:shadow-lg transition-shadow">
                   R
                 </span>
@@ -111,7 +152,7 @@ export default function DashboardHeader({ userRole, userName, profilePicture }: 
                 
                 <div className="flex flex-col text-right">
                   <span className="text-sm font-semibold text-gray-900">{userName}</span>
-                  <span className="text-xs text-gray-500 capitalize font-medium">{userRole}</span>
+                  <span className="text-xs text-gray-500 capitalize font-medium">{roleLabel}</span>
                 </div>
               </div>
 
@@ -180,7 +221,7 @@ export default function DashboardHeader({ userRole, userName, profilePicture }: 
                   
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{userName}</p>
-                    <p className="text-xs text-gray-600 capitalize font-medium">{userRole}</p>
+                    <p className="text-xs text-gray-600 capitalize font-medium">{roleLabel}</p>
                   </div>
                 </div>
                 <button
