@@ -6,9 +6,9 @@ export const API = {
         UPDATE_PROFILE: (id: string) => `/api/auth/${id}`,
     },
     USER: {
-        GET_ALL: '/api/auth',
-        GET_BY_ID: (id: string) => `/api/auth/${id}`,
-        UPDATE: (id: string) => `/api/auth/${id}`,
-        DELETE: (id: string) => `/api/auth/${id}`,
+        GET_ALL: '/api/admin/users',
+        GET_BY_ID: (id: string) => `/api/admin/users/${id}`,
+        UPDATE: (id: string) => `/api/admin/users/${id}`,
+        DELETE: (id: string) => `/api/admin/users/${id}`,
     }
 }

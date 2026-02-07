@@ -37,6 +37,7 @@ export const updateProfile = async (userId: string, formData: FormData) => {
                 'Content-Type': 'multipart/form-data',
             }
         })
+        
         return response.data
     } catch (error: Error | any) {
         throw new Error(error.response?.data?.message || error.message || 'Profile update failed')
@@ -45,7 +46,7 @@ export const updateProfile = async (userId: string, formData: FormData) => {
 
 export const createUser = async (formData: FormData) => {
     try {
-        const response = await axios.post(API.AUTH.UPDATE_PROFILE(''), formData, {
+        const response = await axios.post(API.USER.GET_ALL, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             }
