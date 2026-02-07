@@ -33,16 +33,24 @@ export default function LoginForm() {
           throw new Error(response.message);
         }
         
-        // Store token in localStorage for axios interceptor
+        // Store token and user data in localStorage for axios interceptor and profile page
         if (typeof window !== 'undefined' && response.token) {
           localStorage.setItem('auth_token', response.token);
           console.log('Token stored in localStorage from login response');
         }
         
+        // Store user data in localStorage so profile page can access it
+        if (typeof window !== 'undefined' && response.data) {
+          localStorage.setItem('user_data', JSON.stringify(response.data));
+          console.log('User data stored in localStorage from login response');
+        }
+        
         // Redirect to appropriate dashboard based on user role
         const userRole = response.data?.role;
-        if (userRole === "owner") {
+        if (userRole === "admin") {
           router.push("/admin/dashboard");
+        } else if (userRole === "owner") {
+          router.push("/owner/dashboard");
         } else {
           router.push("/renter/dashboard");
         }
