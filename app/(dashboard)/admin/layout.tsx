@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import DashboardHeader from "../_components/DashboardHeader";
 
 export const metadata = {
-  title: "Owner Dashboard",
-  description: "House Owner Admin Dashboard",
+  title: "Admin Dashboard",
+  description: "Admin Dashboard",
 };
 
 export default async function AdminDashboardLayout({
@@ -18,8 +18,11 @@ export default async function AdminDashboardLayout({
     redirect("/login");
   }
 
-  // Only allow owners (admins) to access this
-  if (userData.role !== "owner") {
+  // Only allow admins to access this
+  if (userData.role !== "admin") {
+    if (userData.role === "owner") {
+      redirect("/owner/dashboard");
+    }
     redirect("/renter/dashboard");
   }
 

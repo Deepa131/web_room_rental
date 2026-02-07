@@ -9,12 +9,12 @@ export const metadata = {
 
 export default function UsersPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Manage Users</h1>
-            <p className="mt-2 text-foreground/60">View and manage all users in the system</p>
+            <h1 className="text-3xl font-bold text-gray-900">Manage Users</h1>
+            <p className="mt-2 text-gray-600">View and manage all users in the system</p>
           </div>
           <Link
             href="/admin/users/create"
@@ -25,7 +25,7 @@ export default function UsersPage() {
           </Link>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-black/10 dark:border-white/10">
+        <div className="bg-white rounded-lg border border-gray-100 shadow-md">
           <UsersTable />
         </div>
       </div>

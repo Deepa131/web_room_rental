@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getUserById, updateUser } from "@/lib/api/auth";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import ProfilePictureSection from "@/app/(dashboard)/user/profile/_components/ProfilePictureSection";
 
 interface UserData {
   _id: string;
@@ -12,6 +11,7 @@ interface UserData {
   email: string;
   role: string;
   profileImage?: string;
+  profilePicture?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -30,17 +30,19 @@ export default function EditUserForm({ userId }: EditUserFormProps) {
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState("");
   const [profileImage, setProfileImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageRemoved, setImageRemoved] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const response = await getUserById(userId);
         if (response.success) {
-          setUser(response.data);
-          setFullName(response.data.fullName);
-          setRole(response.data.role);
-          setImagePreview(response.data.profileImage || "");
+          const userData = response.data;
+          setUser(userData);
+          setFullName(userData.fullName);
+          setRole(userData.role);
+          setImagePreview(null);
         } else {
           setError(response.message || "Failed to fetch user");
         }
@@ -54,16 +56,15 @@ export default function EditUserForm({ userId }: EditUserFormProps) {
     fetchUser();
   }, [userId]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setProfileImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleImageUpdate = (file: File, previewUrl: string) => {
+    setProfileImage(file);
+    setImagePreview(previewUrl);
+  };
+
+  const handleImageRemove = () => {
+    setProfileImage(null);
+    setImagePreview(null);
+    setImageRemoved(true);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -76,17 +77,24 @@ export default function EditUserForm({ userId }: EditUserFormProps) {
       const formData = new FormData();
       formData.append("fullName", fullName);
       formData.append("role", role);
+      
       if (profileImage) {
         formData.append("profilePicture", profileImage);
+      } else if (imageRemoved) {
+        // Send null to indicate photo should be removed
+        formData.append("profilePicture", "null");
       }
 
       const response = await updateUser(userId, formData);
 
       if (response.success) {
         setSuccess("User updated successfully");
+        setProfileImage(null);
+        setImagePreview(null);
+        setImageRemoved(false);
         setTimeout(() => {
-          router.push(`/admin/users/${userId}`);
-        }, 1000);
+          router.push("/admin/dashboard");
+        }, 1500);
       } else {
         setError(response.message || "Failed to update user");
       }
@@ -99,11 +107,10 @@ export default function EditUserForm({ userId }: EditUserFormProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-950">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center py-12">
-            <div className="text-foreground/60">Loading user...</div>
-          </div>
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          <p className="mt-4 text-gray-600">Loading user...</p>
         </div>
       </div>
     );
@@ -111,124 +118,97 @@ export default function EditUserForm({ userId }: EditUserFormProps) {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-950">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
-          <Link
-            href="/admin/users"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6"
-          >
-            <ChevronLeft size={18} />
-            Back to Users
-          </Link>
-          <div className="rounded-md bg-red-50 dark:bg-red-950 p-4">
-            <p className="text-sm font-medium text-red-800 dark:text-red-200">
-              {error || "User not found"}
-            </p>
-          </div>
-        </div>
+      <div className="rounded-md bg-red-50 p-4">
+        <p className="text-sm font-medium text-red-800">
+          {error || "User not found"}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
-        <Link
-          href={`/admin/users/${userId}`}
-          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6"
-        >
-          <ChevronLeft size={18} />
-          Back to User Details
-        </Link>
-
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-black/10 dark:border-white/10 p-8">
-          <h1 className="text-3xl font-bold text-foreground mb-8">Edit User</h1>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="rounded-md bg-red-50 dark:bg-red-950 p-4">
-                <p className="text-sm font-medium text-red-800 dark:text-red-200">{error}</p>
-              </div>
-            )}
-
-            {success && (
-              <div className="rounded-md bg-green-50 dark:bg-green-950 p-4">
-                <p className="text-sm font-medium text-green-800 dark:text-green-200">{success}</p>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Full Name</label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-4 py-2 rounded-md border border-black/10 dark:border-white/15 bg-white dark:bg-gray-900 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-600"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Email</label>
-              <input
-                type="email"
-                value={user.email}
-                disabled
-                className="w-full px-4 py-2 rounded-md border border-black/10 dark:border-white/15 bg-gray-100 dark:bg-gray-800 text-foreground/60 cursor-not-allowed"
-              />
-              <p className="text-xs text-foreground/60 mt-1">Email cannot be changed</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Role</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full px-4 py-2 rounded-md border border-black/10 dark:border-white/15 bg-white dark:bg-gray-900 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-600"
-              >
-                <option value="renter">Renter</option>
-                <option value="owner">Owner (Admin)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Profile Image</label>
-              {imagePreview && (
-                <div className="mb-4">
-                  <img
-                    src={imagePreview}
-                    alt="Profile preview"
-                    className="h-32 w-32 rounded-md object-cover"
-                  />
-                </div>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="w-full px-4 py-2 rounded-md border border-black/10 dark:border-white/15 bg-white dark:bg-gray-900"
-              />
-              <p className="text-xs text-foreground/60 mt-1">Leave empty to keep current image</p>
-            </div>
-
-            <div className="flex gap-4 pt-4">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-6 py-2 rounded-md bg-blue-600 text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting ? "Updating..." : "Update User"}
-              </button>
-              <Link
-                href={`/admin/users/${userId}`}
-                className="px-6 py-2 rounded-md border border-black/10 dark:border-white/15 text-foreground hover:bg-foreground/5 transition-colors"
-              >
-                Cancel
-              </Link>
-            </div>
-          </form>
-        </div>
+    <div className="rounded-xl bg-white border border-gray-100 p-8 shadow-md">
+      {/* Profile Picture Section */}
+      <div className="mb-8 pb-8 border-b border-gray-200">
+        <ProfilePictureSection
+          fullName={fullName}
+          email={user.email}
+          profilePicture={user.profilePicture || user.profileImage}
+          pendingImagePreview={imagePreview}
+          onImageUpdate={handleImageUpdate}
+          onImageRemove={handleImageRemove}
+        />
       </div>
+
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {error && (
+          <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+            <p className="text-sm font-semibold text-red-700">{error}</p>
+          </div>
+        )}
+
+        {success && (
+          <div className="rounded-lg bg-green-50 border border-green-200 p-4">
+            <p className="text-sm font-semibold text-green-700">{success}</p>
+          </div>
+        )}
+
+        {/* Full Name Field */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 mb-3">Full Name</label>
+          <input
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+            placeholder="Enter full name"
+            required
+          />
+        </div>
+
+        {/* Email Field */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 mb-3">Email Address</label>
+          <input
+            type="email"
+            value={user.email}
+            disabled
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed"
+          />
+          <p className="text-xs text-gray-500 mt-2 font-medium">Email cannot be changed</p>
+        </div>
+
+        {/* Role Field */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 mb-3">Account Type</label>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+          >
+            <option value="renter">Renter</option>
+            <option value="owner">Owner</option>
+          </select>
+        </div>
+
+        {/* Submit Button */}
+        <div className="pt-6 border-t border-gray-200">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {submitting ? (
+              <span className="flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Updating User...
+              </span>
+            ) : (
+              "Update User"
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
