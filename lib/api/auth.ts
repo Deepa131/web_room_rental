@@ -1,4 +1,9 @@
-import { LoginData, RegisterData } from "@/app/(auth)/schema"
+import {
+    ForgotPasswordData,
+    LoginData,
+    RegisterData,
+    ResetPasswordData,
+} from "@/app/(auth)/schema"
 import axios from "./axios"
 import { API } from "./endpoints"
 
@@ -18,6 +23,24 @@ export const login = async (loginData: LoginData) => {
         return response.data
     } catch (error: Error | any) {
         throw new Error(error.response?.data?.message || error.message || 'Login failed')
+    }
+}
+
+export const forgotPassword = async (data: ForgotPasswordData) => {
+    try {
+        const response = await axios.post(API.AUTH.FORGOT_PASSWORD, data)
+        return response.data
+    } catch (error: Error | any) {
+        throw new Error(error.response?.data?.message || error.message || 'Failed to send reset email')
+    }
+}
+
+export const resetPassword = async (token: string, data: ResetPasswordData) => {
+    try {
+        const response = await axios.post(API.AUTH.RESET_PASSWORD(token), data)
+        return response.data
+    } catch (error: Error | any) {
+        throw new Error(error.response?.data?.message || error.message || 'Failed to reset password')
     }
 }
 
@@ -57,9 +80,11 @@ export const createUser = async (formData: FormData) => {
     }
 }
 
-export const getAllUsers = async () => {
+export const getAllUsers = async (page = 1, limit = 10) => {
     try {
-        const response = await axios.get(API.USER.GET_ALL)
+        const response = await axios.get(API.USER.GET_ALL, {
+            params: { page, limit },
+        })
         return response.data
     } catch (error: Error | any) {
         throw new Error(error.response?.data?.message || error.message || 'Failed to fetch users')
