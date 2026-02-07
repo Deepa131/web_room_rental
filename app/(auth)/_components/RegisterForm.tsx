@@ -47,12 +47,8 @@ export default function RegisterForm({ role }: RegisterFormProps) {
           throw new Error(response.message);
         }
 
-        // Redirect to appropriate dashboard based on role
-        if (role === "owner") {
-          router.push("/admin/dashboard");
-        } else {
-          router.push("/renter/dashboard");
-        }
+        // Redirect to login page after registration
+        router.push("/login");
       } catch (err: Error | any) {
         setError(err.message || "Registration failed");
       }
