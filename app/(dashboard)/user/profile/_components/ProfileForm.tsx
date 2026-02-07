@@ -17,11 +17,12 @@ interface UserData {
 
 interface ProfileFormProps {
   initialData: UserData;
-  updatedImageUrl?: string; // Image URL from upload (pending save)
-  onSubmitSuccess?: () => void;
+  pendingImageFile?: File | null; // File object from image upload (pending save)
+  imageRemoved?: boolean; // Track if user removed the image
+  onSubmitSuccess?: (updatedData: UserData) => void;
 }
 
-export default function ProfileForm({ initialData, updatedImageUrl, onSubmitSuccess }: ProfileFormProps) {
+export default function ProfileForm({ initialData, pendingImageFile, imageRemoved = false, onSubmitSuccess }: ProfileFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -38,9 +39,12 @@ export default function ProfileForm({ initialData, updatedImageUrl, onSubmitSucc
       const formData = new FormData();
       formData.append("fullName", fullName);
       
-      // If there's a new image URL, include it in the update
-      if (updatedImageUrl) {
-        formData.append("profilePicture", updatedImageUrl);
+      // If there's a pending image file, include it in the update
+      if (pendingImageFile) {
+        formData.append("profilePicture", pendingImageFile);
+      } else if (imageRemoved) {
+        // Send null to indicate photo should be removed
+        formData.append("profilePicture", "null");
       }
 
       const response = await updateProfile(initialData._id, formData);
@@ -48,16 +52,32 @@ export default function ProfileForm({ initialData, updatedImageUrl, onSubmitSucc
       if (response.success && response.data) {
         setSuccess("Profile updated successfully");
         
+        // CRITICAL: Check if profilePicture was actually updated
+        if (pendingImageFile && !response.data.profilePicture) {
+          setError("Image upload may have failed. Please try again.");
+          setLoading(false);
+          return;
+        }
+        
+        if (pendingImageFile && response.data.profilePicture === initialData.profilePicture) {
+          setError("Image upload failed. Please try again.");
+          setLoading(false);
+          return;
+        }
+        
         // Update localStorage with the latest user data from response
         if (typeof window !== 'undefined') {
           localStorage.setItem("user_data", JSON.stringify(response.data));
           
           // Also update the cookie so the navbar reflects the changes immediately
           document.cookie = `user_data=${encodeURIComponent(JSON.stringify(response.data))}; path=/; max-age=${60*60*24*30}`;
+          
+          // Dispatch custom event to notify navbar of profile changes
+          window.dispatchEvent(new Event('profilePictureUpdated'));
         }
         
-        // Call parent callback to reload data
-        onSubmitSuccess?.();
+        // Call parent callback with updated data to reload
+        onSubmitSuccess?.(response.data);
         
         setTimeout(() => {
           router.refresh();

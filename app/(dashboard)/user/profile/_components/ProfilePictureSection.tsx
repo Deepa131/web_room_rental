@@ -1,64 +1,95 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Pencil } from "lucide-react";
-import { updateProfilePicture } from "@/lib/api/auth";
+import { useState, useRef, useEffect } from "react";
 
 interface ProfilePictureSectionProps {
   fullName: string;
   email: string;
   profilePicture?: string;
-  onImageUpdate?: (imageUrl: string) => void;
+  pendingImagePreview?: string | null;
+  onImageUpdate?: (file: File, previewUrl: string) => void;
+  onImageRemove?: () => void;
 }
 
 export default function ProfilePictureSection({
   fullName,
   email,
   profilePicture,
+  pendingImagePreview,
   onImageUpdate,
+  onImageRemove,
 }: ProfilePictureSectionProps) {
-  const [image, setImage] = useState<string | null>(() => {
-    if (profilePicture) {
-      // Convert relative path to absolute URL if needed
-      let imageUrl = profilePicture;
-      
-      // Remove /public/ from the path if it exists
-      if (imageUrl.includes('/public/')) {
-        imageUrl = imageUrl.replace('/public/', '/');
-      }
-      
-      if (!imageUrl.startsWith('http')) {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5050';
-        imageUrl = `${apiBaseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
-      }
-      // Add cache buster for fresh loads
-      return `${imageUrl}?t=${Date.now()}`;
-    }
-    return null;
-  });
+  const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Function to validate URL
-  function isValidUrl(url: string): boolean {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
+  
+  // Check if we have a valid image
+  const isValidImage = (img: string | null | undefined): boolean => {
+    if (!img) return false;
+    if (typeof img !== 'string') return false;
+    const trimmed = img.trim();
+    if (trimmed === '') return false;
+    if (trimmed === 'null' || trimmed === 'undefined') return false;
+    // Treat default profile picture as "no image"
+    if (trimmed === 'default-profile.png' || trimmed.includes('default')) return false;
+    return true;
+  };
+  
+  // Initialize image state - runs only on client
+  useEffect(() => {
+    // Debug: log what we're receiving
+    console.log("ProfilePictureSection - pendingImagePreview:", pendingImagePreview);
+    console.log("ProfilePictureSection - profilePicture:", profilePicture);
+    
+    if (isValidImage(pendingImagePreview)) {
+      console.log("Setting image from pendingImagePreview");
+      setImage(pendingImagePreview!);
+    } else if (isValidImage(profilePicture)) {
+      console.log("Setting image from profilePicture");
+      let imageUrl = profilePicture!;
+      if (!imageUrl.startsWith('/public/') && !imageUrl.startsWith('http')) {
+        imageUrl = `/public/${imageUrl.replace(/^\//, '')}`;
+      }
+      if (!imageUrl.startsWith('http')) {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5050';
+        imageUrl = `${apiBaseUrl}${imageUrl}`;
+      }
+      setImage(imageUrl);
+    } else {
+      console.log("Setting image to null - no valid image");
+      setImage(null);
     }
-  }
+  }, [pendingImagePreview, profilePicture]);
 
   const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
+    if (!name || typeof name !== 'string') return "U";
+    const cleanName = name.trim();
+    if (!cleanName) return "U";
+    
+    const parts = cleanName.split(/\s+/);
+    
+    // If only one word, return first letter
+    if (parts.length === 1) {
+      return parts[0].charAt(0).toUpperCase();
+    }
+    
+    // Return first letter of FIRST word + first letter of LAST word only
+    const first = parts[0].charAt(0).toUpperCase();
+    const last = parts[parts.length - 1].charAt(0).toUpperCase();
+    
+    return first + last;
   };
 
-  const handleImageClick = () => {
+  const handleChoosePhoto = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleRemovePhoto = () => {
+    setImage(null);
+    onImageRemove?.();
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,60 +109,26 @@ export default function ProfilePictureSection({
     }
 
     setLoading(true);
-    
-    // Clear the current image to force re-render
-    setImage(null);
 
     try {
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append("profilePicture", file);
-
-      // Update profile picture on server
-      const response = await updateProfilePicture(formData);
-
-      // Handle response - the actual user data is in response.data or response directly
-      let profilePictureUrl = null;
-      
-      // Check if profilePicture is directly in response.data
-      if (response.data?.profilePicture) {
-        profilePictureUrl = response.data.profilePicture;
-      } 
-      // Check if response itself has profilePicture (in case data is unwrapped)
-      else if (response.profilePicture) {
-        profilePictureUrl = response.profilePicture;
-      }
-      // Check nested structure
-      else if (response.data?.data?.profilePicture) {
-        profilePictureUrl = response.data.data.profilePicture;
-      }
-      
-      if (profilePictureUrl) {
-        // Remove /public/ from the path if it exists (backend saves to public folder but serves without it)
-        if (profilePictureUrl.includes('/public/')) {
-          profilePictureUrl = profilePictureUrl.replace('/public/', '/');
-        }
+      // Create preview URL for local display only
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const previewUrl = reader.result as string;
+        setImage(previewUrl);
         
-        // If the URL is relative, make it absolute using the backend base URL
-        if (!profilePictureUrl.startsWith('http')) {
-          const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5050';
-          profilePictureUrl = `${apiBaseUrl}${profilePictureUrl.startsWith('/') ? '' : '/'}${profilePictureUrl}`;
-        }
+        // Pass the File object and preview URL to parent
+        // This will NOT save to backend yet - only when Update Profile is clicked
+        onImageUpdate?.(file, previewUrl);
         
-        // Add a cache-busting query parameter to force fresh image load
-        const cacheBustUrl = `${profilePictureUrl}?t=${Date.now()}`;
-        setImage(cacheBustUrl);
-        
-        // Just call the callback to pass the image URL to parent
-        // Don't save to localStorage yet - wait for Update Profile button click
-        onImageUpdate?.(profilePictureUrl); // Pass without cache buster
-      } else {
-        alert("Image uploaded but URL not returned from server");
-      }
+        setLoading(false);
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
-      alert("Failed to upload image. Please try again.");
-    } finally {
+      console.error("Failed to preview image:", error);
+      alert("Failed to load image preview. Please try again.");
       setLoading(false);
+    } finally {
       // Reset input
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -139,35 +136,54 @@ export default function ProfilePictureSection({
     }
   };
 
+  const hasValidImage = isValidImage(image);
+
   return (
     <div className="mb-8">
       <div className="flex flex-col items-center">
         {/* Profile Picture Circle */}
-        <div className="relative mb-6 group cursor-pointer" onClick={handleImageClick}>
+        <div className="relative mb-6">
           <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center border-3 border-gray-700 shadow-lg overflow-hidden">
-            {image ? (
+            {hasValidImage ? (
               <img
                 key={image}
-                src={image}
+                src={image!}
                 alt={fullName}
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-4xl font-bold text-white">
+              <span className="text-3xl font-bold text-white">
                 {getInitials(fullName)}
               </span>
             )}
-          </div>
-
-          {/* Edit Icon Overlay */}
-          <div className="absolute top-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-md group-hover:bg-blue-700 transition-colors border-2 border-white">
-            <Pencil size={16} className="text-white" />
           </div>
 
           {loading && (
             <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
               <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
             </div>
+          )}
+        </div>
+
+        {/* Photo Buttons */}
+        <div className="flex gap-3 mb-6">
+          <button
+            type="button"
+            onClick={handleChoosePhoto}
+            disabled={loading}
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Choose photo
+          </button>
+          {hasValidImage && (
+            <button
+              type="button"
+              onClick={handleRemovePhoto}
+              disabled={loading}
+              className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Remove photo
+            </button>
           )}
         </div>
 
