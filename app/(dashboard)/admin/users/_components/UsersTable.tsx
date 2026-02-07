@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
-import { Trash2, Edit2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Trash2, Edit2, Search, Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { getAllUsers, deleteUser } from "@/lib/api/auth";
 
 interface User {
@@ -18,20 +18,25 @@ export default function UsersTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [page, limit]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
       setError("");
-      const response = await getAllUsers();
+      const response = await getAllUsers(page, limit);
       if (response.success) {
-        // Filter out admin users, only show renters and owners
-        const filteredUsers = response.data.filter((user: User) => user.role !== "admin");
-        setUsers(filteredUsers);
+        setUsers(response.data);
+        setTotal(response.meta?.total || 0);
+        setTotalPages(response.meta?.totalPages || 1);
       } else {
         setError(response.message || "Failed to fetch users");
       }
@@ -64,6 +69,31 @@ export default function UsersTable() {
     }
   };
 
+  const filteredUsers = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return users;
+
+    return users.filter((user) => {
+      return (
+        user.fullName.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query) ||
+        user.role.toLowerCase().includes(query)
+      );
+    });
+  }, [users, search]);
+
+  const counts = useMemo(() => {
+    return filteredUsers.reduce(
+      (acc, user) => {
+        if (user.role === "owner") acc.owners += 1;
+        else if (user.role === "renter") acc.renters += 1;
+        else acc.admins += 1;
+        return acc;
+      },
+      { owners: 0, renters: 0, admins: 0 }
+    );
+  }, [filteredUsers]);
+
   if (loading) {
     return (
       <div className="p-12 text-center">
@@ -83,8 +113,60 @@ export default function UsersTable() {
     );
   }
 
+  const startIndex = total === 0 ? 0 : (page - 1) * limit + 1;
+  const endIndex = Math.min(page * limit, total);
+
   return (
     <div className="w-full overflow-hidden">
+      <div className="border-b border-gray-100 bg-gradient-to-r from-amber-50 via-white to-sky-50 px-4 py-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+              <Users size={18} />
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wider text-gray-500">Quick Insights</p>
+              <p className="text-sm font-semibold text-gray-900">
+                Total users: {total}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">Owners: {counts.owners}</span>
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">Renters: {counts.renters}</span>
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">Admins: {counts.admins}</span>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search name, email, role"
+              className="h-10 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-gray-600">
+            <span>Rows</span>
+            <select
+              value={limit}
+              onChange={(event) => {
+                setLimit(Number(event.target.value));
+                setPage(1);
+              }}
+              className="h-9 rounded-md border border-gray-200 bg-white px-2 text-sm text-gray-800"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <table className="w-full text-xs">
         <thead className="border-b border-gray-200 bg-gray-50">
           <tr>
@@ -96,7 +178,7 @@ export default function UsersTable() {
           </tr>
         </thead>
         <tbody>
-          {users.map((user) => (
+          {filteredUsers.map((user) => (
             <tr key={user._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer">
               <td className="py-1.5 px-2 text-gray-900">
                 <Link href={`/admin/users/${user._id}`} className="hover:text-blue-600 line-clamp-1">
@@ -152,12 +234,37 @@ export default function UsersTable() {
         </tbody>
       </table>
       
-      {users.length === 0 && (
+      {filteredUsers.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-600 mb-4">No users found</p>
-          <p className="text-gray-500 text-sm">Users who sign up as Renter or Owner will appear here</p>
+          <p className="text-gray-500 text-sm">Try clearing filters or adjusting the page</p>
         </div>
       )}
+
+      <div className="flex flex-col gap-3 border-t border-gray-100 px-4 py-4 text-xs text-gray-600 md:flex-row md:items-center md:justify-between">
+        <div>
+          Showing {startIndex}-{endIndex} of {total}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+            disabled={page <= 1}
+            className="rounded-md border border-gray-200 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          >
+            Prev
+          </button>
+          <span className="text-sm font-medium text-gray-800">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={page >= totalPages}
+            className="rounded-md border border-gray-200 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
