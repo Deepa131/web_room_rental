@@ -9,7 +9,7 @@ export const metadata = {
 export default async function DashboardPage() {
   const userData = await getUserData();
 
-  const isAdmin = userData?.role === "owner";
+  const isAdmin = userData?.role === "admin";
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
@@ -19,7 +19,7 @@ export default async function DashboardPage() {
             Welcome, {userData?.fullName}!
           </h1>
           <p className="mt-2 text-lg text-foreground/60">
-            {isAdmin ? "You have admin access to manage users" : "You're logged in as a renter"}
+            {isAdmin ? "You have admin access to manage users" : "You're logged in as a user"}
           </p>
         </div>
 
@@ -61,7 +61,7 @@ export default async function DashboardPage() {
             <div className="rounded-md bg-gray-50 dark:bg-gray-800 p-4">
               <p className="text-sm text-foreground/60">Role</p>
               <p className="text-2xl font-bold text-foreground capitalize">
-                {userData?.role === "owner" ? "Admin" : userData?.role}
+                {userData?.role === "admin" ? "Admin" : userData?.role}
               </p>
             </div>
             <div className="rounded-md bg-gray-50 dark:bg-gray-800 p-4">
