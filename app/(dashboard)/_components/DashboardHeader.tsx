@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { handleLogout } from "@/lib/actions/auth-action";
 import { useState, useEffect } from "react";
-import { Menu, X, LogOut, User, BarChart3, Plus, Home, Clock } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 
 interface DashboardHeaderProps {
   userRole?: string;
@@ -16,7 +16,6 @@ export default function DashboardHeader({ userRole, userName, profilePicture }: 
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentProfilePicture, setCurrentProfilePicture] = useState(profilePicture);
-  const isAdmin = userRole === "admin";
   const roleLabel = userRole === "admin" ? "Admin" : userRole;
   const dashboardHref = userRole === "admin"
     ? "/admin/dashboard"
@@ -81,13 +80,16 @@ export default function DashboardHeader({ userRole, userName, profilePicture }: 
     return imageUrl;
   };
 
+  const renterDashboardLabel = userRole === "renter" ? "Explore Rooms" : "Dashboard";
   const navItems = [
-    { label: "Dashboard", href: dashboardHref, roles: ["renter", "owner", "admin"] },
+    { label: renterDashboardLabel, href: dashboardHref, roles: ["renter", "owner", "admin"] },
+    { label: "Manage Rooms", href: "/admin/rooms", roles: ["admin"] },
     { label: "Create User", href: "/admin/users/create", roles: ["admin"] },
-    { label: "Add Room", href: "/add-room", roles: ["owner"] },
-    { label: "My Listings", href: "/my-listings", roles: ["owner"] },
-    { label: "Appointments", href: "/appointments", roles: ["owner"] },
-    { label: "Profile", href: "/user/profile", roles: ["renter", "owner"] },
+    { label: "Add Room", href: "/owner/add-room", roles: ["owner"] },
+    { label: "Requests", href: "/owner/requests", roles: ["owner"] },
+    { label: "My Appointments", href: "/renter/appointments", roles: ["renter"] },
+    { label: "Wishlist", href: "/renter/wishlist", roles: ["renter"] },
+    { label: "Profile", href: userRole === "admin" ? "/admin/profile" : "/user/profile", roles: ["renter", "owner", "admin"] },
   ];
 
   const isActive = (href: string) => pathname?.startsWith(href);
@@ -136,19 +138,24 @@ export default function DashboardHeader({ userRole, userName, profilePicture }: 
               {/* User Dropdown (Desktop) */}
               <div className="hidden sm:flex items-center gap-3">
                 {/* Profile Picture Circle */}
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center border-2 border-blue-700 shadow-md overflow-hidden">
-                  {getProfileImageUrl() ? (
-                    <img
-                      src={getProfileImageUrl()}
-                      alt={userName}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-sm font-bold text-white">
-                      {getInitials(userName)}
-                    </span>
-                  )}
-                </div>
+                {(() => {
+                  const profileImageUrl = getProfileImageUrl();
+                  return (
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center border-2 border-blue-700 shadow-md overflow-hidden flex-shrink-0">
+                      {profileImageUrl ? (
+                        <img
+                          src={profileImageUrl}
+                          alt={userName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-sm font-bold text-white">
+                          {getInitials(userName)}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
                 
                 <div className="flex flex-col text-right">
                   <span className="text-sm font-semibold text-gray-900">{userName}</span>
@@ -205,19 +212,24 @@ export default function DashboardHeader({ userRole, userName, profilePicture }: 
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <div className="px-4 py-2 mb-2 flex items-center gap-3">
                   {/* Profile Picture Circle */}
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center border-2 border-blue-700 shadow-md overflow-hidden flex-shrink-0">
-                    {getProfileImageUrl() ? (
-                      <img
-                        src={getProfileImageUrl()}
-                        alt={userName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-sm font-bold text-white">
-                        {getInitials(userName)}
-                      </span>
-                    )}
-                  </div>
+                  {(() => {
+                    const profileImageUrl = getProfileImageUrl();
+                    return (
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center border-2 border-blue-700 shadow-md overflow-hidden flex-shrink-0">
+                        {profileImageUrl ? (
+                          <img
+                            src={profileImageUrl}
+                            alt={userName}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-sm font-bold text-white">
+                            {getInitials(userName)}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                   
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{userName}</p>
