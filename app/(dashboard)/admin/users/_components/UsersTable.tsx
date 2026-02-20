@@ -24,10 +24,6 @@ export default function UsersTable() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    fetchUsers();
-  }, [page, limit]);
-
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -40,12 +36,18 @@ export default function UsersTable() {
       } else {
         setError(response.message || "Failed to fetch users");
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch users");
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err.message : "Failed to fetch users";
+      setError(error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit]);
 
   const handleDelete = async (userId: string, userName: string) => {
     if (!confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
@@ -62,8 +64,9 @@ export default function UsersTable() {
       } else {
         alert(response.message || "Failed to delete user");
       }
-    } catch (err: any) {
-      alert(err.message || "Failed to delete user");
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err.message : "Failed to delete user";
+      alert(error);
     } finally {
       setDeletingId(null);
     }
@@ -71,9 +74,13 @@ export default function UsersTable() {
 
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return users;
+    
+    // First, filter out admins
+    const nonAdminUsers = users.filter((user) => user.role !== "admin");
+    
+    if (!query) return nonAdminUsers;
 
-    return users.filter((user) => {
+    return nonAdminUsers.filter((user) => {
       return (
         user.fullName.toLowerCase().includes(query) ||
         user.email.toLowerCase().includes(query) ||
@@ -118,7 +125,7 @@ export default function UsersTable() {
 
   return (
     <div className="w-full overflow-hidden">
-      <div className="border-b border-gray-100 bg-gradient-to-r from-amber-50 via-white to-sky-50 px-4 py-4">
+      <div className="border-b border-gray-100 bg-linear-to-r from-amber-50 via-white to-sky-50 px-4 py-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
@@ -127,7 +134,7 @@ export default function UsersTable() {
             <div>
               <p className="text-xs uppercase tracking-wider text-gray-500">Quick Insights</p>
               <p className="text-sm font-semibold text-gray-900">
-                Total users: {total}
+                Total users: {counts.owners + counts.renters}
               </p>
             </div>
           </div>
@@ -167,64 +174,66 @@ export default function UsersTable() {
         </div>
       </div>
 
-      <table className="w-full text-xs">
+      <table className="w-full text-sm">
         <thead className="border-b border-gray-200 bg-gray-50">
           <tr>
-            <th className="text-left py-2 px-2 font-semibold text-gray-900">Name</th>
-            <th className="text-left py-2 px-2 font-semibold text-gray-900">Email</th>
-            <th className="text-left py-2 px-2 font-semibold text-gray-900">Role</th>
-            <th className="text-left py-2 px-2 font-semibold text-gray-900">Created</th>
-            <th className="text-center py-2 px-2 font-semibold text-gray-900">Actions</th>
+            <th className="text-left py-3 px-4 font-bold text-gray-900 text-base">Name</th>
+            <th className="text-left py-3 px-4 font-bold text-gray-900 text-base">Email</th>
+            <th className="text-left py-3 px-4 font-bold text-gray-900 text-base">Role</th>
+            <th className="text-left py-3 px-4 font-bold text-gray-900 text-base">Created</th>
+            <th className="text-center py-3 px-4 font-bold text-gray-900 text-base">Actions</th>
           </tr>
         </thead>
         <tbody>
           {filteredUsers.map((user) => (
             <tr key={user._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer">
-              <td className="py-1.5 px-2 text-gray-900">
+              <td className="py-3 px-4 text-gray-900 font-semibold">
                 <Link href={`/admin/users/${user._id}`} className="hover:text-blue-600 line-clamp-1">
                   {user.fullName}
                 </Link>
               </td>
-              <td className="py-1.5 px-2 text-gray-600">
+              <td className="py-3 px-4 text-gray-600 text-base">
                 <Link href={`/admin/users/${user._id}`} className="hover:text-blue-600 line-clamp-1">
                   {user.email}
                 </Link>
               </td>
               <td className="py-1.5 px-2">
                 <Link href={`/admin/users/${user._id}`}>
-                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
+                  <span className={`inline-flex items-center px-2 py-1 rounded text-sm font-semibold ${
                     user.role === 'owner' 
                       ? 'bg-blue-100 text-blue-800' 
+                      : user.role === 'admin'
+                      ? 'bg-red-100 text-red-800'
                       : 'bg-green-100 text-green-800'
                   }`}>
-                    {user.role === 'owner' ? 'Owner' : 'Renter'}
+                    {user.role === 'owner' ? 'Owner' : user.role === 'admin' ? 'Admin' : 'Renter'}
                   </span>
                 </Link>
               </td>
-              <td className="py-1.5 px-2 text-gray-600">
+              <td className="py-3 px-4 text-gray-600 text-base">
                 <Link href={`/admin/users/${user._id}`} className="hover:text-blue-600">
                   {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
                 </Link>
               </td>
-              <td className="py-1.5 px-2">
-                <div className="flex items-center justify-center gap-0.5">
+              <td className="py-3 px-4">
+                <div className="flex items-center justify-center gap-2">
                   <Link
                     href={`/admin/users/${user._id}/edit`}
-                    className="p-0.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded-lg transition-colors"
                     title="Edit User"
                   >
-                    <Edit2 size={12} />
+                    <Edit2 size={18} />
                   </Link>
                   <button
                     onClick={() => handleDelete(user._id, user.fullName)}
                     disabled={deletingId === user._id}
-                    className="p-0.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Delete User"
                   >
                     {deletingId === user._id ? (
-                      <div className="h-3 w-3 animate-spin rounded-full border border-solid border-red-600 border-r-transparent"></div>
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-solid border-red-600 border-r-transparent\"></div>
                     ) : (
-                      <Trash2 size={12} />
+                      <Trash2 size={18} />
                     )}
                   </button>
                 </div>
@@ -241,7 +250,7 @@ export default function UsersTable() {
         </div>
       )}
 
-      <div className="flex flex-col gap-3 border-t border-gray-100 px-4 py-4 text-xs text-gray-600 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 border-t border-gray-100 px-4 py-4 text-sm text-gray-600 md:flex-row md:items-center md:justify-between">
         <div>
           Showing {startIndex}-{endIndex} of {total}
         </div>
