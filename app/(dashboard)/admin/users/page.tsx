@@ -9,8 +9,8 @@ export const metadata = {
 
 export default function UsersPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Manage Users</h1>
@@ -18,14 +18,14 @@ export default function UsersPage() {
           </div>
           <Link
             href="/admin/users/create"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white font-medium hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
           >
             <Plus size={18} />
             Add User
           </Link>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-100 shadow-md">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <UsersTable />
         </div>
       </div>
