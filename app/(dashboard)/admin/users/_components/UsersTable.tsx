@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Trash2, Edit2, Search, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { getAllUsers, deleteUser } from "@/lib/api/auth";
+import { toast } from "react-hot-toast";
+import { confirmToast } from "@/lib/ui/toast";
 
 interface User {
   _id: string;
@@ -50,9 +52,13 @@ export default function UsersTable() {
   }, [page, limit]);
 
   const handleDelete = async (userId: string, userName: string) => {
-    if (!confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
-      return;
-    }
+    const confirmed = await confirmToast({
+      title: `Delete ${userName}?`,
+      description: "This action cannot be undone.",
+      confirmLabel: "Delete",
+      tone: "danger",
+    });
+    if (!confirmed) return;
 
     try {
       setDeletingId(userId);
@@ -60,13 +66,13 @@ export default function UsersTable() {
       if (response.success) {
         // Remove user from the list
         setUsers(users.filter(user => user._id !== userId));
-        alert("User deleted successfully");
+        toast.success("User deleted successfully");
       } else {
-        alert(response.message || "Failed to delete user");
+        toast.error(response.message || "Failed to delete user");
       }
     } catch (err: unknown) {
       const error = err instanceof Error ? err.message : "Failed to delete user";
-      alert(error);
+      toast.error(error);
     } finally {
       setDeletingId(null);
     }
