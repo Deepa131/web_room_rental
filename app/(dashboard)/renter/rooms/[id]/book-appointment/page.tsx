@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { Room, roomApi } from "@/lib/api/room";
 import { appointmentApi, Appointment } from "@/lib/api/appointment";
 import { Calendar, Phone, ArrowLeft, Clock, User, Mail } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 const getImageUrl = (imagePath: string) => {
   if (!imagePath) return "/placeholder-room.jpg";
@@ -54,17 +55,14 @@ export default function BookAppointmentPage() {
           }));
           
           // Fetch existing appointments to check for duplicates
-          try {
-            const appointmentsResponse = await appointmentApi.getMyAppointments(userData._id);
-            if (appointmentsResponse?.success) {
-              setExistingAppointments(appointmentsResponse.data || []);
-            }
-          } catch (err) {
-            console.error("Error fetching appointments:", err);
+          const appointmentsResponse = await appointmentApi.getMyAppointments(userData._id);
+          if (appointmentsResponse?.success) {
+            setExistingAppointments(appointmentsResponse.data || []);
           }
+          
         }
       } catch (err) {
-        console.error("Error getting user data:", err);
+        return err;
       }
     };
 
@@ -85,10 +83,19 @@ export default function BookAppointmentPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (name === "renterPhone") {
+      const digitsOnly = value.replace(/\D/g, "");
+      if (digitsOnly.length > 10) return;
+      setFormData((prev) => ({
+        ...prev,
+        [name]: digitsOnly,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -110,6 +117,8 @@ export default function BookAppointmentPage() {
     }
     if (!formData.renterPhone.trim()) {
       newErrors.renterPhone = "Phone number is required";
+    } else if (!/^(96|97|98)\d{8}$/.test(formData.renterPhone)) {
+      newErrors.renterPhone = "Invalid phone number format.";
     }
     if (!formData.appointmentDate) {
       newErrors.appointmentDate = "Date is required";
@@ -134,12 +143,13 @@ export default function BookAppointmentPage() {
         apt.roomId === roomId && 
         (apt.status === "pending"
           || apt.status === "confirmed"
-          || apt.status === "approved"
-          || apt.status === "completed")
+          || apt.status === "approved")
     );
 
     if (hasExistingAppointment) {
-      alert("You already have an appointment for this room. Please cancel or wait for the existing appointment to complete.");
+      toast.error(
+        "You already have an appointment for this room."
+      );
       return;
     }
 
@@ -159,15 +169,14 @@ export default function BookAppointmentPage() {
       });
 
       if (response?.success) {
-        alert("Appointment booked successfully!");
+        toast.success("Appointment booked successfully!");
         router.push("/renter/appointments");
       } else {
-        alert(response?.message || "Failed to book appointment");
+        toast.error(response?.message || "Failed to book appointment");
       }
-    } catch (error: any) {
-      console.error("Error booking appointment:", error);
-      const errorMessage = error?.response?.data?.message || "Error booking appointment";
-      alert(errorMessage);
+    } catch (error: unknown) {
+      const errorMessage = error?.toString() || "Error booking appointment";
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -190,7 +199,7 @@ export default function BookAppointmentPage() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-amber-50/40">
+    <div className="w-full min-h-screen bg-transparent">
       {/* Decorative background patterns */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl" />
@@ -210,7 +219,7 @@ export default function BookAppointmentPage() {
             </div>
             <span>Back</span>
           </button>
-          <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-blue-500/30">
+          <div className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-blue-500 to-blue-600 px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-blue-500/30">
             <Calendar size={14} />
             Book Appointment
           </div>
@@ -218,7 +227,7 @@ export default function BookAppointmentPage() {
 
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           {/* Room Card */}
-          <div className="rounded-3xl bg-gradient-to-br from-white to-blue-50/30 backdrop-blur-sm border border-gray-200/50 shadow-xl p-6">
+          <div className="rounded-3xl bg-linear-to-br from-white to-blue-50/30 backdrop-blur-sm border border-gray-200/50 shadow-xl p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Room Details</h2>
             
             <div className="rounded-2xl overflow-hidden mb-4 bg-gray-200">
@@ -317,6 +326,9 @@ export default function BookAppointmentPage() {
                     name="renterPhone"
                     value={formData.renterPhone}
                     onChange={handleChange}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={10}
                     placeholder="98xxxxxxxx"
                     className={`w-full pl-10 pr-4 py-2 rounded-lg border ${
                       errors.renterPhone ? "border-red-500" : "border-gray-300"
@@ -376,7 +388,7 @@ export default function BookAppointmentPage() {
               {/* Message */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-1">
-                  Message (Optional)
+                  Message 
                 </label>
                 <textarea
                   name="message"
@@ -392,7 +404,7 @@ export default function BookAppointmentPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+                className="w-full py-3 rounded-xl font-bold text-white bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
               >
                 {submitting ? "Booking..." : "Confirm Appointment"}
               </button>
