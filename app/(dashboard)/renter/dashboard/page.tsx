@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Bookmark, Search } from "lucide-react";
 import { roomApi, Room, RoomType } from "@/lib/api/room";
+import { toast } from "react-hot-toast";
 
 const WISHLIST_KEY = "wishlist_rooms";
 
@@ -98,7 +99,7 @@ export default function RenterDashboardPage() {
       setWishlistIdsState(nextWishlist);
       setWishlistIds(nextWishlist);
     }
-  }, [rooms]);
+  }, [rooms, wishlistIds]);
 
   const filteredRooms = useMemo(() => {
     return rooms.filter((room) => {
@@ -121,18 +122,25 @@ export default function RenterDashboardPage() {
   }, [rooms, searchTerm, typeFilter, priceFilter]);
 
   const toggleWishlist = (roomId: string) => {
-    const next = wishlistIds.includes(roomId)
-      ? wishlistIds.filter((id) => id !== roomId)
-      : [...wishlistIds, roomId];
-    setWishlistIdsState(next);
-    setWishlistIds(next);
+    try {
+      const wasWishlisted = wishlistIds.includes(roomId);
+      const next = wasWishlisted
+        ? wishlistIds.filter((id) => id !== roomId)
+        : [...wishlistIds, roomId];
+      setWishlistIdsState(next);
+      setWishlistIds(next);
+      toast.success(wasWishlisted ? "Removed from wishlist" : "Added to wishlist");
+    } catch (error) {
+      console.error("Wishlist update failed:", error);
+      toast.error("Could not update wishlist. Please try again.");
+    }
   };
 
   return (
     <div className="w-full">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         <div className="mb-6">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
             Explore Rooms
           </h1>
           <p className="text-gray-600 mt-2 font-medium">
@@ -205,11 +213,6 @@ export default function RenterDashboardPage() {
                       alt={room.roomTitle}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute top-3 right-3">
-                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500 text-white">
-                        Available
-                      </span>
-                    </div>
                   </div>
 
                   <div className="p-4">
@@ -242,7 +245,7 @@ export default function RenterDashboardPage() {
 
                     <Link
                       href={`/renter/rooms/${roomId}`}
-                      className="w-full py-2 rounded-lg font-medium text-white text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:shadow-lg transition-all inline-flex items-center justify-center"
+                      className="w-full py-2 rounded-lg font-medium text-white text-sm bg-linear-to-r from-blue-600 to-blue-700 hover:shadow-lg transition-all inline-flex items-center justify-center"
                     >
                       View Details
                     </Link>
