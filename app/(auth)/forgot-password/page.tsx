@@ -4,11 +4,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { Mail } from "lucide-react";
-import {
-  ForgotPasswordData,
-  forgotPasswordSchema,
-} from "../schema";
+import Image from "next/image";
+import { ForgotPasswordData, forgotPasswordSchema } from "../schema";
 import { forgotPassword } from "@/lib/api/auth";
 
 export default function ForgotPasswordPage() {
@@ -40,64 +37,84 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[radial-gradient(circle_at_top,_#fff5e5,_#ffe8cc_40%,_#f3f4f6_100%)] flex items-center justify-center px-6 py-10">
-      <div className="w-full max-w-lg">
-        <div className="rounded-2xl border border-amber-100 bg-white/90 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.35)] backdrop-blur">
-          <div className="px-8 pt-8 pb-4">
-            <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-4 py-1 text-xs font-semibold text-amber-700">
-              <Mail size={14} />
-              Password Reset
-            </div>
-            <h1 className="mt-4 text-3xl font-serif font-bold text-gray-900">
-              Forgot your password?
-            </h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Enter your email and we will send a secure reset link.
+    <div className="h-screen w-screen overflow-hidden">
+      <div className="grid h-full w-full grid-cols-2">
+        <div className="relative h-full w-full overflow-hidden flex flex-col justify-center items-center text-white p-8">
+          <Image
+            src="/images/image.png"
+            alt="RentEasy"
+            fill
+            className="object-cover absolute inset-0"
+            priority
+          />
+          
+          <div className="absolute inset-0 bg-black/50 z-[1]"></div>
+          
+          <div className="relative z-10 text-center max-w-md">
+            <h2 className="text-4xl font-bold mb-4 text-white drop-shadow-2xl">Welcome to RentEasy</h2>
+            <p className="text-lg text-white drop-shadow-2xl">
+              Find your perfect room or list your properties with ease
             </p>
           </div>
+        </div>
 
-          <form onSubmit={handleSubmit(submit)} className="px-8 pb-8 space-y-5">
-            {error && (
-              <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-                {error}
+        <div className="flex h-full items-center justify-center bg-gray-50 px-8 overflow-y-auto">
+          <div className="w-full max-w-md py-8">
+            <div className="mb-8 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 text-white text-lg font-bold shadow-md">
+                R
               </div>
-            )}
-            {message && (
-              <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-700">
-                {message}
-              </div>
-            )}
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">RentEasy</span>
+            </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700">
-                Email Address
-              </label>
-              <input
-                type="email"
-                placeholder="you@example.com"
-                className="h-11 w-full rounded-lg border border-gray-200 px-4 text-sm text-gray-900 placeholder-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200"
-                {...register("email")}
-              />
-              {errors.email && (
-                <p className="text-xs text-red-600">{errors.email.message}</p>
+            <h1 className="mb-2 text-3xl font-bold text-gray-900">Forgot Password?</h1>
+            <p className="mb-8 text-sm text-gray-600">
+              Enter your email address and we&apos;ll send you a reset link
+            </p>
+
+            <form onSubmit={handleSubmit(submit)} className="w-full space-y-5">
+              {error && (
+                <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                  {error}
+                </div>
               )}
-            </div>
+              {message && (
+                <div className="rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-700">
+                  {message}
+                </div>
+              )}
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="h-11 w-full rounded-lg bg-amber-600 text-white font-semibold hover:bg-amber-700 transition-colors disabled:opacity-60"
-            >
-              {isSubmitting ? "Sending..." : "Send Reset Link"}
-            </button>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="h-10 w-full rounded-lg border border-gray-300 px-4 text-sm text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  {...register("email")}
+                />
+                {errors.email && (
+                  <p className="text-xs text-red-600">{errors.email.message}</p>
+                )}
+              </div>
 
-            <div className="text-center text-sm text-gray-600">
-              Remembered it?{" "}
-              <Link href="/login" className="font-semibold text-amber-700 hover:underline">
-                Back to login
-              </Link>
-            </div>
-          </form>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="h-10 w-full rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-60 transition-colors"
+              >
+                {isSubmitting ? "Sending..." : "Send Reset Link"}
+              </button>
+
+              <p className="text-center text-sm text-gray-700">
+                Remember your password?{" "}
+                <Link href="/login" className="font-semibold text-blue-600 hover:text-blue-700">
+                  Back to login
+                </Link>
+              </p>
+            </form>
+          </div>
         </div>
       </div>
     </div>
