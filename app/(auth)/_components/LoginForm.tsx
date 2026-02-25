@@ -1,5 +1,4 @@
 "use client";
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -54,7 +53,7 @@ export default function LoginForm() {
         } else {
           router.push("/renter/dashboard");
         }
-      } catch (err: Error | any) {
+      } catch (err: any) {
         setError(err.message || "Login failed");
       }
     });
@@ -71,8 +70,8 @@ export default function LoginForm() {
         </label>
         <input
           type="email"
-          placeholder="Enter email"
-          className="h-10 w-full rounded-lg border border-gray-300 px-4 text-sm text-black placeholder-gray-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          placeholder="Enter your email"
+          className="h-10 w-full rounded-lg border border-gray-300 px-4 text-sm text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           {...register("email")}/>
         {errors.email && (
           <p className="text-xs text-red-600">{errors.email.message}</p>
@@ -88,7 +87,7 @@ export default function LoginForm() {
           <input
             type={showPassword ? "text" : "password"}
             placeholder="••••••••"
-            className="h-10 w-full rounded-lg border border-gray-300 px-4 pr-10 text-sm text-black placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="h-10 w-full rounded-lg border border-gray-300 px-4 pr-10 text-sm text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             {...register("password")}/>
 
           <button
@@ -104,15 +103,8 @@ export default function LoginForm() {
         )}
       </div>
 
-      <div className="flex items-center justify-between text-sm">
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded accent-blue-500"/>
-          <span className="text-gray-700">Remember Me</span>
-        </label>
-
-        <Link href="/forgot-password" className="text-blue-500 hover:underline">
+      <div className="flex items-center justify-end text-sm">
+        <Link href="/forgot-password" className="text-blue-600 hover:text-blue-700 font-medium">
           Forgot password?
         </Link>
       </div>
@@ -120,16 +112,16 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={isSubmitting || pending}
-        className="h-10 w-full rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 disabled:opacity-60">
-        {isSubmitting || pending ? "Logging in..." : "Log in"}
+        className="h-10 w-full rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-60 transition-colors">
+        {isSubmitting || pending ? "Logging in..." : "Log In"}
       </button>
 
       <p className="text-center text-sm text-gray-700">
         Don&apos;t have an account?{" "}
         <Link
           href="/register"
-          className="font-semibold text-blue-500 hover:underline">
-          Sign up
+          className="font-semibold text-blue-600 hover:text-blue-700">
+          Create account
         </Link>
       </p>
     </form>

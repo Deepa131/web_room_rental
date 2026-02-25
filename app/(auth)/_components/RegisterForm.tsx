@@ -1,5 +1,4 @@
 "use client";
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -110,14 +109,14 @@ export default function RegisterForm({ role }: RegisterFormProps) {
       <button
         type="submit"
         disabled={isSubmitting || pending}
-        className="h-10 w-full rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 disabled:opacity-60"
+        className="h-10 w-full rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-60 transition-colors"
       >
-        {isSubmitting || pending ? "Creating account..." : "Sign up"}
+        {isSubmitting || pending ? "Creating account..." : "Create Account"}
       </button>
 
       <p className="text-center text-sm text-gray-700">
         Already have an account?{" "}
-        <Link href="/login" className="font-semibold text-blue-500 hover:underline">
+        <Link href="/login" className="font-semibold text-blue-600 hover:text-blue-700">
           Log in
         </Link>
       </p>
