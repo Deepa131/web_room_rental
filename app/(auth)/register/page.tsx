@@ -18,7 +18,7 @@ export default function RegisterPage() {
             className="object-cover absolute inset-0"
             priority
           />
-          <div className="absolute inset-0 bg-black/50 z-[1]"></div>
+          <div className="absolute inset-0 bg-black/50 z-1"></div>
           
           <div className="relative z-10 text-center max-w-md">
             <h2 className="text-4xl font-bold mb-4 text-white drop-shadow-2xl">Welcome to RentEasy</h2>
