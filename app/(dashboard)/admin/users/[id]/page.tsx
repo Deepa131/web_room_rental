@@ -99,7 +99,7 @@ export default function UserDetailPage() {
 
   if (loading) {
     return (
-      <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden flex flex-col">
+      <div className="h-screen bg-linear-to-br from-gray-50 to-gray-100 overflow-hidden flex flex-col">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-4 flex-1 flex flex-col">
           <Link
             href="/admin/dashboard"
@@ -121,7 +121,7 @@ export default function UserDetailPage() {
 
   if (error || !user) {
     return (
-      <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden flex flex-col">
+      <div className="h-screen bg-linear-to-br from-gray-50 to-gray-100 overflow-hidden flex flex-col">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-4 flex-1 flex flex-col">
           <Link
             href="/admin/dashboard"
@@ -144,7 +144,7 @@ export default function UserDetailPage() {
   const initials = getInitials(user.fullName);
 
   return (
-    <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+    <div className="h-screen bg-linear-to-br from-gray-50 to-gray-100 overflow-hidden">
       <div className="mx-auto max-w-3xl px-8 py-3 h-full flex flex-col">
         {/* Back Button */}
         <Link
@@ -174,7 +174,7 @@ export default function UserDetailPage() {
             {/* Profile Picture and Name Section */}
             <div className="flex flex-col items-center pb-3 border-b border-gray-200">
               {/* Profile Picture */}
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center border-4 border-gray-200 shadow-lg overflow-hidden mb-4">
+              <div className="w-24 h-24 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center border-4 border-gray-200 shadow-lg overflow-hidden mb-4">
                 {profileImageUrl ? (
                   <img
                     src={profileImageUrl}
@@ -203,7 +203,7 @@ export default function UserDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6 overflow-hidden">
               {/* Email */}
               <div className="flex gap-3">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-blue-100">
                     <Mail className="h-5 w-5 text-blue-600" />
                   </div>
@@ -216,7 +216,7 @@ export default function UserDetailPage() {
 
               {/* Account Type */}
               <div className="flex gap-3">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-indigo-100">
                     <Shield className="h-5 w-5 text-indigo-600" />
                   </div>
@@ -229,7 +229,7 @@ export default function UserDetailPage() {
 
               {/* Created Date */}
               <div className="flex gap-3">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-green-100">
                     <Calendar className="h-5 w-5 text-green-600" />
                   </div>
@@ -248,7 +248,7 @@ export default function UserDetailPage() {
 
               {/* Updated Date */}
               <div className="flex gap-3">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-orange-100">
                     <Calendar className="h-5 w-5 text-orange-600" />
                   </div>
