@@ -19,7 +19,7 @@ export default async function UserLayout({
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen w-full bg-linear-to-b from-blue-50 to-white">
       <DashboardHeader 
         userName={userData.fullName} 
         userRole={userData.role}
