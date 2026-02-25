@@ -1,6 +1,6 @@
 import { getUserData } from "@/lib/cookie";
 import { redirect } from "next/navigation";
-import DashboardHeader from "../_components/DashboardHeader";
+import AdminSidebar from "./_components/AdminSidebar";
 
 export const metadata = {
   title: "Admin Dashboard",
@@ -27,13 +27,12 @@ export default async function AdminDashboardLayout({
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100">
-      <DashboardHeader 
-        userName={userData.fullName} 
-        userRole={userData.role}
+    <div className="min-h-screen w-full bg-gray-50">
+      <AdminSidebar 
+        userName={userData.fullName}
         profilePicture={userData.profilePicture}
       />
-      <main>
+      <main className="lg:ml-64 min-h-screen">
         {children}
       </main>
     </div>
