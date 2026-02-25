@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { appointmentApi, Appointment } from "@/lib/api/appointment";
 import { Calendar, Clock, Edit, Trash2, MapPin } from "lucide-react";
-import { getUserData } from "@/lib/cookie";
+import { toast } from "react-hot-toast";
+import { confirmToast } from "@/lib/ui/toast";
 
 const getImageUrl = (imagePath: string) => {
   if (!imagePath) return "/placeholder-room.jpg";
@@ -19,14 +20,6 @@ const statusColors = {
   rejected: "bg-red-500",
   completed: "bg-blue-500",
   cancelled: "bg-red-500",
-};
-
-const statusTextColors = {
-  pending: "text-amber-900",
-  confirmed: "text-green-900",
-  approved: "text-lime-900",
-  completed: "text-blue-900",
-  cancelled: "text-red-900",
 };
 
 const getAppointmentId = (appointment: Appointment & { _id?: string }) =>
@@ -50,10 +43,7 @@ export default function AppointmentsPage() {
     const fetchUserAndAppointments = async () => {
       try {
         // Get user data from cookie by calling server action or parsing from client
-        const userDataStr = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("user_data="))
-          ?.split("=")[1];
+        const userDataStr = document.cookie.split("; ").find((row) => row.startsWith("user_data="))?.split("=")[1];
         
         if (userDataStr) {
           const userData = JSON.parse(decodeURIComponent(userDataStr));
@@ -83,7 +73,6 @@ export default function AppointmentsPage() {
         setError(response?.message || "Failed to load appointments");
       }
     } catch (err: any) {
-      console.error("Error fetching appointments:", err);
       setError(err?.response?.data?.message || "Failed to load appointments");
     } finally {
       setLoading(false);
@@ -91,9 +80,13 @@ export default function AppointmentsPage() {
   };
 
   const handleDelete = async (appointmentId: string) => {
-    if (!confirm("Are you sure you want to delete this appointment?")) {
-      return;
-    }
+    const confirmed = await confirmToast({
+      title: "Delete this appointment?",
+      description: "This action cannot be undone.",
+      confirmLabel: "Delete",
+      tone: "danger",
+    });
+    if (!confirmed) return;
 
     try {
       const response = await appointmentApi.cancelAppointment(appointmentId);
@@ -101,13 +94,12 @@ export default function AppointmentsPage() {
         setAppointments((prev) =>
           prev.filter((apt) => getAppointmentId(apt as Appointment & { _id?: string }) !== appointmentId)
         );
-        alert("Appointment deleted successfully");
+        toast.success("Appointment deleted successfully");
       } else {
-        alert(response?.message || "Failed to delete appointment");
+        toast.error(response?.message || "Failed to delete appointment");
       }
     } catch (err: any) {
-      console.error("Error deleting appointment:", err);
-      alert(err?.response?.data?.message || "Failed to delete appointment");
+      toast.error(err?.response?.data?.message || "Failed to delete appointment");
     }
   };
 
@@ -152,13 +144,12 @@ export default function AppointmentsPage() {
           )
         );
         handleCancelEdit();
-        alert("Appointment updated successfully");
+        toast.success("Appointment updated successfully");
       } else {
-        alert(response?.message || "Failed to update appointment");
+        toast.error(response?.message || "Failed to update appointment");
       }
     } catch (err: any) {
-      console.error("Error updating appointment:", err);
-      alert(err?.response?.data?.message || "Failed to update appointment");
+      toast.error(err?.response?.data?.message || "Failed to update appointment");
     }
   };
 
@@ -187,7 +178,7 @@ export default function AppointmentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-transparent">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <div className="mb-8">
@@ -214,15 +205,15 @@ export default function AppointmentsPage() {
             </button>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             {appointments.map((appointment) => (
               <div
                 key={getAppointmentId(appointment as Appointment & { _id?: string })}
-                className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden"
+                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-gray-100"
               >
-                <div className="relative flex flex-col sm:flex-row">
-                  {/* Room Image */}
-                  <div className="w-full sm:w-32 h-40 sm:h-auto bg-gray-200 flex items-center justify-center shrink-0">
+                <div className="flex gap-3 p-3">
+                  {/* Room Image Thumbnail */}
+                  <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-200 flex items-center justify-center shrink-0">
                     {appointment.room?.images?.[0] ? (
                       <img
                         src={getImageUrl(appointment.room.images[0])}
@@ -231,55 +222,52 @@ export default function AppointmentsPage() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                        <MapPin className="w-12 h-12 text-gray-400" />
+                        <MapPin className="w-8 h-8 text-gray-400" />
                       </div>
                     )}
                   </div>
 
-                  {/* Status Badge - Positioned at top right */}
-                  <div className="absolute top-3 right-3 z-10">
-                    <span
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold text-white ${
-                        statusColors[appointment.status as keyof typeof statusColors] || "bg-gray-500"
-                      }`}
-                    >
-                      {capitalizeStatus(appointment.status)}
-                    </span>
-                  </div>
-
                   {/* Appointment Details */}
-                  <div className="flex-1 p-4 sm:p-5">
-                    <div className="mb-3">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <h3 className="text-base font-semibold text-gray-900 truncate">
                         {appointment.room?.roomTitle || "Room Appointment"}
                       </h3>
-                      <div className="flex flex-wrap gap-3 text-sm text-gray-600">
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="w-4 h-4" />
-                          <span>{formatDate(appointment.appointmentDate)}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-4 h-4" />
-                          <span>{appointment.appointmentTime}</span>
-                        </div>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-semibold text-white shrink-0 ${
+                          statusColors[appointment.status as keyof typeof statusColors] || "bg-gray-500"
+                        }`}
+                      >
+                        {capitalizeStatus(appointment.status)}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2.5 text-xs text-gray-600 mb-2">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>{formatDate(appointment.appointmentDate)}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{appointment.appointmentTime}</span>
                       </div>
                     </div>
 
                     {appointment.message && (
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      <p className="text-xs text-gray-600 mb-2 line-clamp-1">
                         {appointment.message}
                       </p>
                     )}
 
                     {/* Action Buttons */}
-                    <div className="flex gap-4 pt-2">
+                    <div className="flex gap-3">
                       {appointment.status === "pending" && (
                         <>
                           <button
                             onClick={() => handleEdit(appointment)}
-                            className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
+                            className="flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium text-xs transition-colors"
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="w-3.5 h-3.5" />
                             <span>Edit</span>
                           </button>
                           <button
@@ -288,9 +276,9 @@ export default function AppointmentsPage() {
                                 getAppointmentId(appointment as Appointment & { _id?: string })
                               )
                             }
-                            className="flex items-center gap-1.5 text-red-600 hover:text-red-700 font-medium text-sm transition-colors"
+                            className="flex items-center gap-1 text-red-600 hover:text-red-700 font-medium text-xs transition-colors"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                             <span>Cancel</span>
                           </button>
                         </>
@@ -303,9 +291,9 @@ export default function AppointmentsPage() {
                               getAppointmentId(appointment as Appointment & { _id?: string })
                             )
                           }
-                          className="flex items-center gap-1.5 text-gray-600 hover:text-gray-700 font-medium text-sm transition-colors"
+                          className="flex items-center gap-1 text-gray-600 hover:text-gray-700 font-medium text-xs transition-colors"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                           <span>Remove</span>
                         </button>
                       )}
@@ -319,7 +307,7 @@ export default function AppointmentsPage() {
 
         {/* Edit Modal */}
         {editingAppointment && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Edit Appointment</h2>
               
@@ -355,7 +343,7 @@ export default function AppointmentsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Message (Optional)
+                    Message
                   </label>
                   <textarea
                     value={editFormData.message}
