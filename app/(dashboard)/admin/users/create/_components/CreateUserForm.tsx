@@ -84,90 +84,90 @@ export default function CreateUserForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50">
+      <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-6">
         <Link
           href="/admin/users"
-          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6"
+          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-4 font-medium text-sm"
         >
-          <ChevronLeft size={18} />
+          <ChevronLeft size={16} />
           Back to Users
         </Link>
 
-        <div className="bg-white rounded-lg border border-gray-100 shadow-md p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Create New User</h1>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New User</h1>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="rounded-md bg-red-50 p-4">
+              <div className="rounded-lg bg-red-50 p-3 border border-red-200">
                 <p className="text-sm font-medium text-red-800">{error}</p>
               </div>
             )}
 
             {success && (
-              <div className="rounded-md bg-green-50 p-4">
+              <div className="rounded-lg bg-green-50 p-3 border border-green-200">
                 <p className="text-sm font-medium text-green-800">{success}</p>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Full Name *</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1.5">Full Name *</label>
               <input
                 type="text"
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 rounded-md border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Email *</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1.5">Email *</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 rounded-md border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Password *</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1.5">Password *</label>
               <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 rounded-md border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                 required
                 minLength={6}
               />
-              <p className="text-xs text-gray-600 mt-1">Minimum 6 characters</p>
+              <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Confirm Password *</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1.5">Confirm Password *</label>
               <input
                 type="password"
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 rounded-md border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                 required
                 minLength={6}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Role *</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1.5">Role *</label>
               <select
                 name="role"
                 value={formData.role}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 rounded-md border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
               >
                 <option value="renter">Renter</option>
                 <option value="owner">Owner</option>
@@ -175,13 +175,13 @@ export default function CreateUserForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Profile Image</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1.5">Profile Image</label>
               {imagePreview && (
-                <div className="mb-4">
+                <div className="mb-3">
                   <img
                     src={imagePreview}
                     alt="Profile preview"
-                    className="h-32 w-32 rounded-md object-cover"
+                    className="h-24 w-24 rounded-lg object-cover border border-gray-200"
                   />
                 </div>
               )}
@@ -189,22 +189,22 @@ export default function CreateUserForm() {
                 type="file"
                 accept="image/*"
                 onChange={handleImageChange}
-                className="w-full px-4 py-2 rounded-md border border-gray-200 bg-white"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm"
               />
-              <p className="text-xs text-gray-600 mt-1">Optional - Image upload (uses FormData with Multer)</p>
+              <p className="text-xs text-gray-500 mt-1">Optional - Upload profile image</p>
             </div>
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex gap-3 pt-4">
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2 rounded-md bg-blue-600 text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Creating..." : "Create User"}
               </button>
               <Link
                 href="/admin/users"
-                className="px-6 py-2 rounded-md border border-gray-200 text-gray-900 hover:bg-gray-50 transition-colors"
+                className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </Link>
