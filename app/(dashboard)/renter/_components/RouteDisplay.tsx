@@ -24,7 +24,6 @@ interface RouteDisplayProps {
 
 export default function RouteDisplay({
   roomLocation,
-  roomAddress,
   userId,
   onShowNavigation,
 }: RouteDisplayProps) {
@@ -72,7 +71,6 @@ export default function RouteDisplay({
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Could not access your location. Please enable location permissions.";
       toast.error(errorMessage);
-      console.error("Location error:", error);
     } finally {
       setLoading(false);
     }
@@ -123,7 +121,7 @@ export default function RouteDisplay({
             <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
               {/* Distance and Time Cards */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-blue-50 to-white p-3.5">
+                <div className="rounded-xl border border-gray-200 bg-linear-to-br from-blue-50 to-white p-3.5">
                   <div className="flex items-center gap-2 mb-1.5">
                     <Navigation size={16} className="text-blue-600" />
                     <span className="text-sm font-semibold text-gray-900">
@@ -133,7 +131,7 @@ export default function RouteDisplay({
                   <p className="text-xs text-gray-600">Distance from you</p>
                 </div>
 
-                <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-amber-50 to-white p-3.5">
+                <div className="rounded-xl border border-gray-200 bg-linear-to-br from-amber-50 to-white p-3.5">
                   <div className="flex items-center gap-2 mb-1.5">
                     <Clock size={16} className="text-amber-600" />
                     <span className="text-sm font-semibold text-gray-900">{travelTime}</span>
@@ -145,7 +143,7 @@ export default function RouteDisplay({
               {/* View Route Button - Opens Navigation in Main Area */}
               <button
                 onClick={onShowNavigation}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:shadow-lg transition-all text-sm"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-white bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:shadow-lg transition-all text-sm"
               >
                 <Navigation size={16} />
                 View Route on Map

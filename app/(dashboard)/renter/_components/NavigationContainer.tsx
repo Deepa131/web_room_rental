@@ -53,7 +53,7 @@ export default function NavigationContainer({
   const watchIdRef = useRef<number | null>(null);
   const hasArrivedRef = useRef(false);
 
-  // Calculate distance (no side effects)
+  // Calculate distance 
   const distance = calculateDistance(
     currentLocation.latitude,
     currentLocation.longitude,
@@ -151,7 +151,7 @@ export default function NavigationContainer({
   return (
     <div className="w-full space-y-3 animate-in slide-in-from-top-2 duration-300">
       {/* Navigation Header */}
-      <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
+      <div className="rounded-2xl bg-linear-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className="w-full flex items-center justify-between"
@@ -252,7 +252,7 @@ export default function NavigationContainer({
               <button
                 onClick={startNavigation}
                 disabled={hasArrived}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-bold text-base hover:from-green-700 hover:to-green-800 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-linear-to-r from-green-600 to-green-700 text-white rounded-xl font-bold text-base hover:from-green-700 hover:to-green-800 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Play size={18} />
                 Start Navigation
@@ -260,7 +260,7 @@ export default function NavigationContainer({
             ) : (
               <button
                 onClick={stopNavigation}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-bold text-base hover:from-red-700 hover:to-red-800 transition-all shadow-lg"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-linear-to-r from-red-600 to-red-700 text-white rounded-xl font-bold text-base hover:from-red-700 hover:to-red-800 transition-all shadow-lg"
               >
                 <Square size={18} />
                 Stop Navigation
