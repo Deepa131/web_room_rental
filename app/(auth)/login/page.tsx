@@ -7,7 +7,7 @@ export default function LoginPage() {
   return (
     <div className="h-screen w-screen overflow-hidden">
       <div className="grid h-full w-full grid-cols-2">
-        <div className="relative h-full w-full overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 flex flex-col justify-center items-center text-white p-8">
+        <div className="relative h-full w-full overflow-hidden flex flex-col justify-center items-center text-white p-8">
           <Image
             src="/images/image.png"
             alt="RentEasy"
@@ -15,9 +15,11 @@ export default function LoginPage() {
             className="object-cover absolute inset-0"
             priority
           />
+          <div className="absolute inset-0 bg-black/50 z-1"></div>
+          
           <div className="relative z-10 text-center max-w-md">
-            <h2 className="text-4xl font-bold mb-4">Welcome to RentEasy</h2>
-            <p className="text-lg text-blue-100">
+            <h2 className="text-4xl font-bold mb-4 text-white drop-shadow-2xl">Welcome to RentEasy</h2>
+            <p className="text-lg text-white drop-shadow-2xl">
               Find your perfect room or list your properties with ease
             </p>
           </div>
