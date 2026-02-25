@@ -28,10 +28,10 @@ export default function LoginPage() {
         <div className="flex h-full items-center justify-center bg-gray-50 px-8 overflow-y-auto">
           <div className="w-full max-w-md py-8">
             <div className="mb-8 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 text-white text-lg font-bold shadow-md">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-linear-to-br from-blue-600 to-blue-700 text-white text-lg font-bold shadow-md">
                 R
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">RentEasy</span>
+              <span className="text-2xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">RentEasy</span>
             </div>
 
             <h1 className="mb-2 text-3xl font-bold text-gray-900">Welcome Back</h1>
