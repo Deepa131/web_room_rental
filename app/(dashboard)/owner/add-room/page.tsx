@@ -1,11 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { roomApi, RoomType, Location } from "@/lib/api/room";
-import { Home, Upload, X, Loader2, Image as ImageIcon, Video } from "lucide-react";
+import { Home, X, Loader2, Image as ImageIcon, Video } from "lucide-react";
 import { toast } from "react-hot-toast";
 import LocationPicker from "../_components/LocationPicker";
+
+type UserData = {
+  role: string;
+  _id?: string;
+};
+
+const getErrorMessage = (error: unknown): string => {
+  if (error && typeof error === "object") {
+    const response = (error as { response?: { data?: { message?: string } } }).response;
+    if (response?.data?.message) {
+      return response.data.message;
+    }
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Unexpected error";
+};
 
 export default function AddRoomPage() {
   const router = useRouter();
@@ -13,7 +34,7 @@ export default function AddRoomPage() {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadingVideos, setUploadingVideos] = useState(false);
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   const [formData, setFormData] = useState({
     ownerContactNumber: "",
@@ -38,25 +59,19 @@ export default function AddRoomPage() {
         const user = userDataStr ? JSON.parse(userDataStr) : null;
         setUserData(user);
 
-        console.log("Fetching room types from API...");
         const roomTypesResponse = await roomApi.getRoomTypes();
-        console.log("Room types response:", roomTypesResponse);
         
         if (roomTypesResponse.success && roomTypesResponse.data) {
           const activeTypes = roomTypesResponse.data.filter((rt: RoomType) => rt.status === "active");
-          console.log("Active room types:", activeTypes);
           setRoomTypes(activeTypes);
           if (activeTypes.length === 0) {
-            toast.error("No room types available. Please contact admin to add room types.");
+            toast.error("No room types available.");
           }
         } else {
-          console.error("Failed to load room types:", roomTypesResponse);
           toast.error("Failed to load room types");
         }
-      } catch (error: any) {
-        console.error("Error fetching room types:", error);
-        console.error("Error details:", error.response?.data || error.message);
-        toast.error(`Failed to load room types: ${error.response?.data?.message || error.message}`);
+      } catch (error: unknown) {
+        toast.error(`Failed to load room types: ${getErrorMessage(error)}`);
       }
     };
     fetchData();
@@ -66,6 +81,17 @@ export default function AddRoomPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+    if (name === "ownerContactNumber") {
+      const digitsOnly = value.replace(/\D/g, "");
+      if (digitsOnly.length > 10) return;
+      setFormData((prev) => ({ ...prev, [name]: digitsOnly }));
+      return;
+    }
+    if (name === "monthlyPrice") {
+      const normalized = value.replace(/[^0-9]/g, "");
+      setFormData((prev) => ({ ...prev, [name]: normalized }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -104,8 +130,8 @@ export default function AddRoomPage() {
       }));
       setPreviewImages((prev) => [...prev, ...previews]);
       toast.success(`${uploadedImages.length} image(s) uploaded successfully`);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to upload images");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error) || "Failed to upload images");
     } finally {
       setUploadingImages(false);
     }
@@ -138,8 +164,8 @@ export default function AddRoomPage() {
       }));
       setPreviewVideos((prev) => [...prev, ...previews]);
       toast.success(`${uploadedVideos.length} video(s) uploaded successfully`);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to upload videos");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error) || "Failed to upload videos");
     } finally {
       setUploadingVideos(false);
     }
@@ -169,6 +195,28 @@ export default function AddRoomPage() {
       return;
     }
 
+    if (!formData.ownerContactNumber.trim()) {
+      toast.error("Contact number is required");
+      return;
+    } else if (!/^(96|97|98)\d{8}$/.test(formData.ownerContactNumber)) {
+      toast.error("Invalid phone number format.");
+      return;
+    }
+
+    const priceValue = Number(formData.monthlyPrice);
+    if (!Number.isFinite(priceValue)) {
+      toast.error("Invalid monthly price");
+      return;
+    }
+    if (priceValue < 500) {
+      toast.error("Monthly price must be at least NPR 500");
+      return;
+    }
+    if (priceValue > 1000000) {
+      toast.error("Monthly price must be NPR 1,000,000 or less");
+      return;
+    }
+
     if (!formData.locationCoords) {
       toast.error("Please select a location on the map");
       return;
@@ -178,7 +226,7 @@ export default function AddRoomPage() {
     try {
       const response = await roomApi.createRoom({
         ...formData,
-        monthlyPrice: Number(formData.monthlyPrice),
+        monthlyPrice: priceValue,
       });
 
       if (response.success) {
@@ -186,19 +234,19 @@ export default function AddRoomPage() {
         // Force a full page reload to refresh the dashboard data
         window.location.href = "/owner/dashboard";
       }
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to create room");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error) || "Failed to create room");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
+    <div className="min-h-screen bg-transparent text-gray-900">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
             Add New Room
           </h1>
           <p className="text-gray-700 mt-1">Fill in the details to list your property</p>
@@ -234,6 +282,9 @@ export default function AddRoomPage() {
                   name="monthlyPrice"
                   value={formData.monthlyPrice}
                   onChange={handleInputChange}
+                  min={1000}
+                  max={1000000}
+                  inputMode="numeric"
                   required
                   placeholder="e.g., 8000"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -288,6 +339,9 @@ export default function AddRoomPage() {
                   name="ownerContactNumber"
                   value={formData.ownerContactNumber}
                   onChange={handleInputChange}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={10}
                   required
                   placeholder="e.g., 9841234567"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -344,9 +398,12 @@ export default function AddRoomPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                 {previewImages.map((img, index) => (
                   <div key={index} className="relative group">
-                    <img
+                    <Image
                       src={img.preview}
                       alt={`Preview ${index + 1}`}
+                      width={320}
+                      height={128}
+                      unoptimized
                       className="w-full h-32 object-cover rounded-lg border border-gray-200"
                     />
                     <button
@@ -425,7 +482,7 @@ export default function AddRoomPage() {
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:shadow-lg transition-all hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-6 py-3 bg-linear-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:shadow-lg transition-all hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading ? (
                 <>
