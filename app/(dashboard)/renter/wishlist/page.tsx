@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Bookmark } from "lucide-react";
 import { roomApi, Room } from "@/lib/api/room";
+import { toast } from "react-hot-toast";
 
 const WISHLIST_KEY = "wishlist_rooms";
 
@@ -67,15 +68,22 @@ export default function WishlistPage() {
   }, [rooms, wishlistIds]);
 
   const toggleWishlist = (roomId: string) => {
-    const next = wishlistIds.includes(roomId)
-      ? wishlistIds.filter((id) => id !== roomId)
-      : [...wishlistIds, roomId];
-    setWishlistIdsState(next);
-    setWishlistIds(next);
+    try {
+      const wasWishlisted = wishlistIds.includes(roomId);
+      const next = wasWishlisted
+        ? wishlistIds.filter((id) => id !== roomId)
+        : [...wishlistIds, roomId];
+      setWishlistIdsState(next);
+      setWishlistIds(next);
+      toast.success(wasWishlisted ? "Removed from wishlist" : "Added to wishlist");
+    } catch (error) {
+      console.error("Wishlist update failed:", error);
+      toast.error("Could not update wishlist. Please try again.");
+    }
   };
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
+    <div className="w-full min-h-screen bg-transparent">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-7">
           <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -114,11 +122,6 @@ export default function WishlistPage() {
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-                    <div className="absolute top-3 right-3">
-                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500 text-white">
-                        Available
-                      </span>
-                    </div>
                   </div>
 
                   <div className="p-4">
