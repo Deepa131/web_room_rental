@@ -17,7 +17,7 @@ export default function EditRoomPage() {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadingVideos, setUploadingVideos] = useState(false);
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<{ role: string } | null>(null);
 
   const [formData, setFormData] = useState({
     ownerContactNumber: "",
@@ -101,6 +101,17 @@ export default function EditRoomPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+    if (name === "ownerContactNumber") {
+      const digitsOnly = value.replace(/\D/g, "");
+      if (digitsOnly.length > 10) return;
+      setFormData((prev) => ({ ...prev, [name]: digitsOnly }));
+      return;
+    }
+    if (name === "monthlyPrice") {
+      const normalized = value.replace(/[^0-9]/g, "");
+      setFormData((prev) => ({ ...prev, [name]: normalized }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -206,19 +217,41 @@ export default function EditRoomPage() {
       return;
     }
 
+    if (!formData.ownerContactNumber.trim()) {
+      toast.error("Contact number is required");
+      return;
+    } else if (!/^(96|97|98)\d{8}$/.test(formData.ownerContactNumber)) {
+      toast.error("Phone number must start with 96, 97, or 98 and be 10 digits");
+      return;
+    }
+
+    const priceValue = Number(formData.monthlyPrice);
+    if (!Number.isFinite(priceValue)) {
+      toast.error("Invalid monthly price");
+      return;
+    }
+    if (priceValue < 1000) {
+      toast.error("Monthly price must be at least NPR 1,000");
+      return;
+    }
+    if (priceValue > 1000000) {
+      toast.error("Monthly price must be NPR 1,000,000 or less");
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await roomApi.updateRoom(roomId, {
         ownerContactNumber: formData.ownerContactNumber,
         roomTitle: formData.roomTitle,
-        monthlyPrice: Number(formData.monthlyPrice),
+        monthlyPrice: priceValue,
         location: formData.location,
         locationCoords: formData.locationCoords,
         roomType: formData.roomType,
         description: formData.description,
         images: formData.images,
         videos: formData.videos,
-      } as any);
+      } as const);
 
       if (response.success) {
         toast.success("Room updated successfully!");
@@ -233,21 +266,21 @@ export default function EditRoomPage() {
 
   if (fetchingRoom) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading room details...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
+          <p className="text-gray-600 mt-4">Loading room details...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
+    <div className="min-h-screen bg-transparent text-gray-900">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
             Edit Room
           </h1>
           <p className="text-gray-700 mt-1">Update your property details</p>
@@ -283,6 +316,9 @@ export default function EditRoomPage() {
                   name="monthlyPrice"
                   value={formData.monthlyPrice}
                   onChange={handleInputChange}
+                  min={500}
+                  max={1000000}
+                  inputMode="numeric"
                   required
                   placeholder="e.g., 8000"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -298,6 +334,7 @@ export default function EditRoomPage() {
                   title="Select Room Location"
                   userId={userData?._id}
                   defaultLocation={formData.locationCoords}
+                  askForPermission={false}
                 />
                 {formData.location && (
                   <p className="text-xs text-gray-600 mt-2">
@@ -335,6 +372,9 @@ export default function EditRoomPage() {
                   name="ownerContactNumber"
                   value={formData.ownerContactNumber}
                   onChange={handleInputChange}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={10}
                   required
                   placeholder="e.g., 9841234567"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -472,7 +512,7 @@ export default function EditRoomPage() {
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:shadow-lg transition-all hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-6 py-3 bg-linear-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:shadow-lg transition-all hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading ? (
                 <>
