@@ -27,13 +27,13 @@ export default async function RenterDashboardLayout({
   }
 
   return (
-    <div className="min-h-screen w-full bg-white">
+    <div className="min-h-screen w-full bg-linear-to-b from-blue-50 to-white">
       <DashboardHeader
         userName={userData.fullName}
         userRole={userData.role}
         profilePicture={userData.profilePicture}
       />
-      <main className="min-h-[calc(100vh-64px)] bg-white">
+      <main className="min-h-[calc(100vh-64px)] bg-transparent">
         {children}
       </main>
     </div>
