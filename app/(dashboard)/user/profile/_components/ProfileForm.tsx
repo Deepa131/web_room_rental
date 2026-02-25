@@ -17,7 +17,7 @@ interface UserData {
 
 interface ProfileFormProps {
   initialData: UserData;
-  pendingImageFile?: File | null; // File object from image upload (pending save)
+  pendingImageFile?: File | null; // File object from image upload 
   imageRemoved?: boolean; // Track if user removed the image
   onSubmitSuccess?: (updatedData: UserData) => void;
 }
@@ -93,75 +93,73 @@ export default function ProfileForm({ initialData, pendingImageFile, imageRemove
   };
 
   return (
-    <div className="rounded-xl bg-white border border-gray-100 p-8 shadow-md">
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {error && (
-          <div className="rounded-lg bg-red-50 border border-red-200 p-4">
-            <p className="text-sm font-semibold text-red-700">{error}</p>
-          </div>
-        )}
-
-        {success && (
-          <div className="rounded-lg bg-green-50 border border-green-200 p-4">
-            <p className="text-sm font-semibold text-green-700">{success}</p>
-          </div>
-        )}
-
-        {/* Full Name Field */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-3">Full Name</label>
-          <input
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-            placeholder="Enter your full name"
-            required
-          />
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {error && (
+        <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+          <p className="text-sm font-medium text-red-700">{error}</p>
         </div>
+      )}
 
-        {/* Email Field */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-3">Email Address</label>
-          <input
-            type="email"
-            value={initialData.email}
-            disabled
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed"
-          />
-          <p className="text-xs text-gray-500 mt-2 font-medium">Email cannot be changed</p>
+      {success && (
+        <div className="rounded-lg bg-green-50 border border-green-200 p-3">
+          <p className="text-sm font-medium text-green-700">{success}</p>
         </div>
+      )}
 
-        {/* Role Field */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-3">Account Type</label>
-          <input
-            type="text"
-            value={initialData.role}
-            disabled
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed capitalize"
-          />
-          <p className="text-xs text-gray-500 mt-2 font-medium">Account type cannot be changed</p>
-        </div>
+      {/* Full Name Field */}
+      <div>
+        <label className="block text-sm font-medium text-gray-900 mb-2">Full Name</label>
+        <input
+          type="text"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+          placeholder="Enter your full name"
+          required
+        />
+      </div>
 
-        {/* Submit Button */}
-        <div className="pt-6 border-t border-gray-200">
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Updating Profile...
-              </span>
-            ) : (
-              "Update Profile"
-            )}
-          </button>
-        </div>
-      </form>
-    </div>
+      {/* Email Field */}
+      <div>
+        <label className="block text-sm font-medium text-gray-900 mb-2">Email Address</label>
+        <input
+          type="email"
+          value={initialData.email}
+          disabled
+          className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed"
+        />
+        <p className="text-xs text-gray-500 mt-1.5">Email cannot be changed</p>
+      </div>
+
+      {/* Role Field */}
+      <div>
+        <label className="block text-sm font-medium text-gray-900 mb-2">Account Type</label>
+        <input
+          type="text"
+          value={initialData.role}
+          disabled
+          className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed capitalize"
+        />
+        <p className="text-xs text-gray-500 mt-1.5">Account type cannot be changed</p>
+      </div>
+
+      {/* Submit Button */}
+      <div className="pt-4">
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              Updating...
+            </span>
+          ) : (
+            "Update Profile"
+          )}
+        </button>
+      </div>
+    </form>
   );
 }
