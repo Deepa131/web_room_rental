@@ -17,7 +17,7 @@ interface UserData {
 
 export default function ProfilePage() {
   const [userData, setUserData] = useState<UserData | null>(null);
-  // Pending image state - stored in memory only, lost on navigation (not saved to backend/localStorage)
+  // Pending image state - stored in memory only, lost on navigation
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null);
   const [imageRemoved, setImageRemoved] = useState(false);
@@ -27,14 +27,9 @@ export default function ProfilePage() {
     // Get user data from localStorage first (most up-to-date after form submission)
     const localStorageData = localStorage.getItem("user_data");
     if (localStorageData) {
-      try {
-        const parsed = JSON.parse(localStorageData);
-        setUserData(parsed);
-        console.log("Loaded user data from localStorage:", parsed);
-        return;
-      } catch (e) {
-        console.error("Failed to parse user data from localStorage:", e);
-      }
+      const parsed = JSON.parse(localStorageData);
+      setUserData(parsed);
+      return;
     }
     
     // Fallback to cookie and sync to localStorage
@@ -42,21 +37,17 @@ export default function ProfilePage() {
     const userDataCookie = cookies.find((c) => c.startsWith("user_data="));
     
     if (userDataCookie) {
-      try {
-        const userDataStr = decodeURIComponent(userDataCookie.split("=")[1]);
-        const parsed = JSON.parse(userDataStr);
-        setUserData(parsed);
+      const userDataStr = decodeURIComponent(userDataCookie.split("=")[1]);
+      const parsed = JSON.parse(userDataStr);
+      setUserData(parsed);
         
-        // Sync cookie data to localStorage for future access
-        localStorage.setItem("user_data", JSON.stringify(parsed));
-        console.log("Loaded user data from cookie and synced to localStorage:", parsed);
-      } catch (e) {
-        console.error("Failed to parse user data from cookie:", e);
-      }
+      // Sync cookie data to localStorage for future access
+      localStorage.setItem("user_data", JSON.stringify(parsed));
     }
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadUserData();
     setLoading(false);
     
@@ -111,28 +102,32 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="w-full">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+    <div className="w-full min-h-screen bg-transparent">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
             My Profile
           </h1>
-          <p className="text-gray-600 mt-3 text-lg font-medium">Update your personal information</p>
+          <p className="text-gray-600 mt-1">Manage your personal information and settings</p>
         </div>
 
-        {/* Profile Picture Section */}
-        <ProfilePictureSection
-          fullName={userData.fullName}
-          email={userData.email}
-          profilePicture={userData.profilePicture || userData.profileImage}
-          pendingImagePreview={pendingImagePreview}
-          onImageUpdate={handleImageUpdate}
-          onImageRemove={handleImageRemove}
-        />
+        {/* Profile Card */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          {/* Profile Picture Section */}
+          <div className="bg-linear-to-br from-blue-50 to-indigo-50 px-6 py-8">
+            <ProfilePictureSection
+              fullName={userData.fullName}
+              email={userData.email}
+              profilePicture={userData.profilePicture || userData.profileImage}
+              pendingImagePreview={pendingImagePreview}
+              onImageUpdate={handleImageUpdate}
+              onImageRemove={handleImageRemove}
+            />
+          </div>
 
-        {/* Form Section */}
-        <div className="flex justify-center">
-          <div className="w-full max-w-xl">
+          {/* Form Section */}
+          <div className="p-6">
             <ProfileForm 
               initialData={userData} 
               pendingImageFile={pendingImageFile}
