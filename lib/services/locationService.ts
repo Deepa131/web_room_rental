@@ -10,6 +10,7 @@ export interface LocationPermissionStatus {
 }
 
 const LOCATION_PERMISSION_KEY = 'location_permission_granted';
+const LOCATION_PERMISSION_MODE_KEY = 'location_permission_mode'; // 'always', 'just_this_time', or null
 const USER_LOCATION_KEY = 'user_current_location';
 const ROOM_LOCATION_PREFIX = 'room_location_';
 
@@ -32,6 +33,46 @@ export const grantLocationPermission = (userId?: string): void => {
 };
 
 /**
+ * Set location permission mode ('always' or 'just_this_time')
+ */
+export const setLocationPermissionMode = (mode: 'always' | 'just_this_time'): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(LOCATION_PERMISSION_MODE_KEY, mode);
+  localStorage.setItem(LOCATION_PERMISSION_KEY, 'true');
+};
+
+/**
+ * Get location permission mode
+ */
+export const getLocationPermissionMode = (): 'always' | 'just_this_time' | null => {
+  if (typeof window === 'undefined') return null;
+  const mode = localStorage.getItem(LOCATION_PERMISSION_MODE_KEY);
+  return (mode as 'always' | 'just_this_time') || null;
+};
+
+/**
+ * Check if should show location permission prompt
+ */
+export const shouldShowPermissionPrompt = (): boolean => {
+  if (typeof window === 'undefined') return true;
+  const mode = getLocationPermissionMode();
+  // Show prompt if no mode set (first time) or if mode is 'just_this_time' (ask every time)
+  return mode === null || mode === 'just_this_time';
+};
+
+/**
+ * Clear just-this-time permission (called when page unloads or on refresh)
+ */
+export const clearJustThisTimePermission = (): void => {
+  if (typeof window === 'undefined') return;
+  const mode = getLocationPermissionMode();
+  if (mode === 'just_this_time') {
+    localStorage.removeItem(LOCATION_PERMISSION_KEY);
+    localStorage.removeItem(LOCATION_PERMISSION_MODE_KEY);
+  }
+};
+
+/**
  * Request and get user's current location using Geolocation API
  */
 export const getCurrentLocation = (): Promise<Location> => {
@@ -49,7 +90,21 @@ export const getCurrentLocation = (): Promise<Location> => {
         });
       },
       (error) => {
-        reject(error);
+        // Create a more detailed error message based on the code
+        let message = 'Could not retrieve location';
+        if (error.code === 1) {
+          message = 'Location permission denied. Please allow location access in your browser.';
+        } else if (error.code === 2) {
+          message = 'Location is unavailable. Please try again or ensure location services are enabled.';
+        } else if (error.code === 3) {
+          message = 'Location request timed out. Please try again.';
+        } else if (error.message) {
+          message = error.message;
+        }
+        
+        const err = new Error(message);
+        (err as { code?: string }).code = error.code;
+        reject(err);
       },
       {
         enableHighAccuracy: true,
@@ -138,22 +193,34 @@ export const reverseGeocode = async (
   longitude: number
 ): Promise<string> => {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
     const response = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
       {
         headers: {
           "Accept": "application/json",
+          "Accept-Language": "en",
+          "User-Agent": "room-rental-app",
         },
+        signal: controller.signal,
       }
     );
-    const data = await response.json();
+    clearTimeout(timeoutId);
 
+    if (!response.ok) {
+      console.warn(`Reverse geocoding failed with status ${response.status}`);
+      return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+    }
+
+    const data = await response.json();
     if (data && data.display_name) {
       return data.display_name;
     }
     return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
   } catch (error) {
-    console.error('Geocoding error:', error);
+    console.warn('Reverse geocoding error, using coordinates:', error);
     return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
   }
 };
@@ -163,6 +230,9 @@ export const reverseGeocode = async (
  */
 export const geocodeAddress = async (address: string): Promise<Location | null> => {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(
         address
@@ -170,11 +240,20 @@ export const geocodeAddress = async (address: string): Promise<Location | null> 
       {
         headers: {
           "Accept": "application/json",
+          "Accept-Language": "en",
+          "User-Agent": "room-rental-app",
         },
+        signal: controller.signal,
       }
     );
-    const data = await response.json();
+    clearTimeout(timeoutId);
 
+    if (!response.ok) {
+      console.warn(`Geocoding failed with status ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
     if (Array.isArray(data) && data.length > 0) {
       const lat = Number(data[0].lat);
       const lng = Number(data[0].lon);
@@ -186,7 +265,7 @@ export const geocodeAddress = async (address: string): Promise<Location | null> 
     }
     return null;
   } catch (error) {
-    console.error('Geocoding error:', error);
+    console.warn('Geocoding error:', error);
     return null;
   }
 };
