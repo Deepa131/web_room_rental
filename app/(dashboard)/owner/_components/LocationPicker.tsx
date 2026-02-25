@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
-import { MapPin, Loader2, Zap, ChevronDown } from "lucide-react";
+import { MapPin, Loader2, ChevronDown } from "lucide-react";
 import { Location } from "@/lib/api/room";
 import {
   getCurrentLocation,
@@ -12,8 +12,11 @@ import {
   geocodeAddress,
   cacheUserLocation,
   getCachedUserLocation,
+  setLocationPermissionMode,
+  shouldShowPermissionPrompt,
 } from "@/lib/services/locationService";
 import { toast } from "react-hot-toast";
+import LocationPermissionModal from "./LocationPermissionModal";
 
 const OsmMapPicker = dynamic(() => import("./OsmMapPicker"), {
   ssr: false,
@@ -24,6 +27,7 @@ interface LocationPickerProps {
   defaultLocation?: Location;
   title?: string;
   userId?: string;
+  askForPermission?: boolean; // Set to false to skip permission modal 
 }
 
 export default function LocationPicker({
@@ -31,6 +35,7 @@ export default function LocationPicker({
   defaultLocation,
   title = "Select Location",
   userId,
+  askForPermission = true,
 }: LocationPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -46,12 +51,14 @@ export default function LocationPicker({
   const [draftAddress, setDraftAddress] = useState<string>(
     defaultLocation?.address || ""
   );
-  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [permissionGanted, setPermissionGranted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [autoRequested, setAutoRequested] = useState(false);
-  const [locationNotice, setLocationNotice] = useState<string | null>(null);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  
+  // Use ref to track if already attempted auto-loading 
+  const autoRequestedRef = useRef(false);
 
   const defaultCenter: [number, number] = useMemo(() => {
     if (draftLocation) {
@@ -84,30 +91,9 @@ export default function LocationPicker({
     }
   }, [defaultLocation]);
 
-  useEffect(() => {
-    if (!isOpen) {
-      setAutoRequested(false);
-      return;
-    }
-    if (autoRequested) return;
-
-    setAutoRequested(true);
-
-    const cached = getCachedUserLocation();
-    if (cached) {
-      setDraftLocation(cached);
-      reverseGeocode(cached.latitude, cached.longitude)
-        .then((address) => setDraftAddress(address))
-        .catch(() => null);
-      return;
-    }
-
-    handleRequestLocation();
-  }, [isOpen, autoRequested]);
-
-  const handleRequestLocation = async () => {
+  const handleRequestLocation = useCallback(async () => {
     setLoading(true);
-    setLocationNotice(null);
+    const permissionToastId = toast.loading("Requesting location permission...");
     try {
       const location = await getCurrentLocation();
       setDraftLocation(location);
@@ -116,27 +102,76 @@ export default function LocationPicker({
       const address = await reverseGeocode(location.latitude, location.longitude);
       setDraftAddress(address);
 
-      grantLocationPermission(userId);
+      // Permission is already granted or mode is set from modal
+      if (!checkLocationPermission(userId)) {
+        grantLocationPermission(userId);
+      }
       setPermissionGranted(true);
 
-      toast.success("Location updated");
+      toast.success("Location detected", { id: permissionToastId });
     } catch (error: any) {
-      const code = typeof error?.code === "number" ? error.code : null;
-      const message =
-        code === 1
-          ? "Location permission denied. Please allow location access in your browser."
-          : code === 2
-          ? "Location is unavailable. Please turn on GPS/location services."
-          : code === 3
-          ? "Location request timed out. Try again."
-          : "Could not access your location. Please ensure location permissions are enabled.";
-      setLocationNotice(message);
-      toast.error(message);
-      console.error("Location error:", error);
+      // Handle error from location service with better messages
+      let message = "Could not access your location. You can still select location manually on the map.";
+      
+      if (error instanceof Error && error.message) {
+        // Use the improved error message from locationService
+        message = error.message;
+      }
+      
+      toast.error(message, { id: permissionToastId });
+      console.error("Location error:", error?.message || error);
     } finally {
       setLoading(false);
+      setShowPermissionModal(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      autoRequestedRef.current = false;
+      return;
+    }
+
+    // If permission modal is showing, wait for user response
+    if (showPermissionModal) {
+      return;
+    }
+
+    // If already attempted, don't try again
+    if (autoRequestedRef.current) return;
+
+    autoRequestedRef.current = true;
+
+    // Get the actual permission prompt status
+    const needsPermissionPrompt = shouldShowPermissionPrompt();
+
+    // If should ask for permission AND need to show prompt, show modal FIRST
+    if (askForPermission && needsPermissionPrompt) {
+      setShowPermissionModal(true);
+      return;
+    }
+
+    // After permission is handled, check for cached location
+    const cached = getCachedUserLocation();
+    if (cached) {
+      setDraftLocation(cached);
+      // Try to get address but don't block if it fails
+      reverseGeocode(cached.latitude, cached.longitude)
+        .then((address) => {
+          if (address) setDraftAddress(address);
+        })
+      return;
+    }
+
+    // If should not ask for permission, try to request without modal
+    if (!askForPermission) {
+      handleRequestLocation();
+      return;
+    }
+
+    // Otherwise request location with permission already granted
+    handleRequestLocation();
+  }, [isOpen, showPermissionModal, askForPermission, handleRequestLocation, userId]);
 
   const handleConfirm = async () => {
     if (!draftLocation) {
@@ -157,10 +192,29 @@ export default function LocationPicker({
     toast.success("Location confirmed");
   };
 
+  const handlePermissionAlways = async () => {
+    setLocationPermissionMode("always");
+    setPermissionGranted(true);
+    await handleRequestLocation();
+  };
+
+  const handlePermissionJustThisTime = async () => {
+    setLocationPermissionMode("just_this_time");
+    setPermissionGranted(true);
+    await handleRequestLocation();
+  };
+
+  const handlePermissionCancel = () => {
+    setShowPermissionModal(false);
+    autoRequestedRef.current = false; // Allow retry if user opens map again
+    setIsOpen(false);
+  };
+
   const handleCancel = () => {
     setDraftLocation(confirmedLocation);
     setDraftAddress(confirmedAddress);
     setIsOpen(false);
+    autoRequestedRef.current = false; // Allow retry if user opens map again
   };
 
   const handleSearch = async () => {
@@ -178,8 +232,13 @@ export default function LocationPicker({
         return;
       }
       setSearchError(null);
-      setSelectedLocation({ latitude: result.latitude, longitude: result.longitude });
-      setSelectedAddress(result.address || searchQuery.trim());
+      const nextAddress = result.address || searchQuery.trim();
+      setDraftLocation({
+        latitude: result.latitude,
+        longitude: result.longitude,
+        address: nextAddress,
+      });
+      setDraftAddress(nextAddress);
     } catch (error: any) {
       setSearchError(error?.message || "Search failed.");
     } finally {
@@ -189,12 +248,20 @@ export default function LocationPicker({
 
   return (
     <div className="w-full">
+      <LocationPermissionModal
+        isOpen={showPermissionModal}
+        loading={loading}
+        onAlways={handlePermissionAlways}
+        onJustThisTime={handlePermissionJustThisTime}
+        onCancel={handlePermissionCancel}
+      />
+
       <div
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 cursor-pointer hover:border-blue-500 hover:ring-1 hover:ring-blue-500 transition-all flex items-center justify-between group"
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <MapPin size={18} className="text-blue-500 flex-shrink-0" />
+          <MapPin size={18} className="text-blue-500 shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-gray-700 truncate">
               {confirmedAddress || "Click to select location"}
@@ -203,16 +270,16 @@ export default function LocationPicker({
         </div>
         <ChevronDown
           size={18}
-          className="flex-shrink-0 text-gray-400 group-hover:text-blue-500 transition-colors"
+          className="shrink-0 text-gray-400 group-hover:text-blue-500 transition-colors"
         />
       </div>
 
-      {isOpen && (
+      {isOpen && !showPermissionModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setIsOpen(false)} />
 
           <div className="relative w-full max-w-2xl max-h-[90vh] rounded-2xl bg-white shadow-2xl overflow-hidden flex flex-col">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 flex items-center justify-between">
+            <div className="bg-linear-to-r from-blue-600 to-blue-700 text-white p-4 flex items-center justify-between">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <MapPin size={20} />
                 {title}
@@ -248,43 +315,24 @@ export default function LocationPicker({
                 )}
               </div>
 
-              {locationNotice && (
-                <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                  {locationNotice}
+              {loading && (
+                <div className="flex items-center gap-2 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Loader2 size={18} className="animate-spin text-blue-600" />
+                  <p className="text-sm text-blue-800">Detecting your location...</p>
                 </div>
               )}
 
-              {!permissionGranted && (
-                <button
-                  onClick={handleRequestLocation}
-                  disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      Getting your location...
-                    </>
-                  ) : (
-                    <>
-                      <Zap size={18} />
-                      Use My Current Location
-                    </>
-                  )}
-                </button>
-              )}
-
-              {permissionGranted && draftLocation && draftAddress && (
-                <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-lg">
-                  <MapPin size={18} className="text-green-600 flex-shrink-0" />
+              {!loading && draftLocation && draftAddress && (
+                <div className="flex items-center gap-2 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <MapPin size={18} className="text-blue-600 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-green-800">Current location tracked</p>
-                    <p className="text-xs text-green-700 truncate">{draftAddress}</p>
+                    <p className="text-sm font-medium text-blue-800">Selected Location</p>
+                    <p className="text-xs text-blue-700 truncate">{draftAddress}</p>
                   </div>
                 </div>
               )}
 
-              <div className="w-full h-80 min-h-[320px] rounded-lg border border-gray-300 overflow-hidden">
+              <div className="w-full h-80 min-h-80 rounded-lg border border-gray-300 overflow-hidden">
                 <OsmMapPicker
                   center={defaultCenter}
                   selectedLocation={draftLocation}
@@ -318,7 +366,7 @@ export default function LocationPicker({
               <button
                 onClick={handleConfirm}
                 disabled={!draftLocation}
-                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-linear-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Confirm Location
               </button>
