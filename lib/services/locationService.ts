@@ -103,7 +103,7 @@ export const getCurrentLocation = (): Promise<Location> => {
         }
         
         const err = new Error(message);
-        (err as { code?: string }).code = error.code;
+        (err as { code?: string }).code = String(error.code);
         reject(err);
       },
       {
