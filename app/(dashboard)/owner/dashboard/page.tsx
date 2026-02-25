@@ -7,6 +7,7 @@ import { Home, Clock, CheckCircle, Plus, Edit, Trash2 } from "lucide-react";
 import { roomApi, Room } from "@/lib/api/room";
 import { appointmentApi, Appointment } from "@/lib/api/appointment";
 import { toast } from "react-hot-toast";
+import { confirmToast } from "@/lib/ui/toast";
 
 export default function OwnerDashboardPage() {
   const router = useRouter();
@@ -43,8 +44,6 @@ export default function OwnerDashboardPage() {
           setAppointments(appointmentsResponse.data || []);
         }
       }
-    } catch (error) {
-      console.error("Error fetching data:", error);
     } finally {
       if (showLoading) {
         setLoading(false);
@@ -88,9 +87,7 @@ export default function OwnerDashboardPage() {
             room.id === roomId ? { ...room, isAvailable: !currentStatus } : room
           )
         );
-        toast.success(
-          !currentStatus ? "Room marked as available" : "Room marked as rented"
-        );
+        toast.success(!currentStatus ? "Room marked as available" : "Room marked as rented");
       }
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to update room status");
@@ -100,7 +97,13 @@ export default function OwnerDashboardPage() {
   };
 
   const deleteRoom = async (roomId: string) => {
-    if (!confirm("Are you sure you want to delete this room?")) return;
+    const confirmed = await confirmToast({
+      title: "Delete this room?",
+      description: "This action cannot be undone.",
+      confirmLabel: "Delete",
+      tone: "danger",
+    });
+    if (!confirmed) return;
 
     try {
       const response = await roomApi.deleteRoom(roomId);
@@ -130,7 +133,7 @@ export default function OwnerDashboardPage() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         {/* Welcome Section */}
         <div className="mb-6">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
             Welcome, {userData?.fullName}!
           </h1>
           <p className="text-gray-600 mt-2 font-medium">Manage your properties and bookings</p>
@@ -196,7 +199,7 @@ export default function OwnerDashboardPage() {
             </div>
             <Link
               href="/owner/add-room"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium hover:shadow-lg transition-all hover:from-blue-700 hover:to-blue-800"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-linear-to-r from-blue-600 to-blue-700 text-white font-medium hover:shadow-lg transition-all hover:from-blue-700 hover:to-blue-800"
             >
               <Plus size={18} />
               Add Room
@@ -210,7 +213,7 @@ export default function OwnerDashboardPage() {
             </div>
           ) : rooms.length === 0 ? (
             <div className="rounded-xl bg-white border border-gray-100 p-8 shadow-md text-center hover:shadow-lg transition-shadow">
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+              <div className="bg-linear-to-r from-blue-50 to-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Home className="text-blue-600" size={32} />
               </div>
               <p className="text-lg font-semibold text-gray-900 mb-2">No rooms available</p>
@@ -219,7 +222,7 @@ export default function OwnerDashboardPage() {
               </p>
               <Link
                 href="/owner/add-room"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium hover:shadow-lg transition-all hover:from-blue-700 hover:to-blue-800"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-linear-to-r from-blue-600 to-blue-700 text-white font-medium hover:shadow-lg transition-all hover:from-blue-700 hover:to-blue-800"
               >
                 <Plus size={18} />
                 Add Your First Room
