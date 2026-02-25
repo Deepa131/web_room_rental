@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { roomApi, Room } from "@/lib/api/room";
 import { toast } from "react-hot-toast";
 import { Trash2, Eye, Edit } from "lucide-react";
+import { confirmToast } from "@/lib/ui/toast";
 
 interface PaginatedResponse {
   success: boolean;
@@ -24,13 +25,13 @@ export default function RoomsTable() {
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [approvalFilter, setApprovalFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchText, setSearchText] = useState("");
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRooms();
-  }, [page, limit, approvalFilter, searchText]);
+  }, [page, limit, statusFilter, searchText]);
 
   const fetchRooms = async () => {
     try {
@@ -40,8 +41,8 @@ export default function RoomsTable() {
       setError("");
 
       const filters: any = {};
-      if (approvalFilter !== "all") {
-        filters.approvalStatus = approvalFilter;
+      if (statusFilter !== "all") {
+        filters.isAvailable = statusFilter === "available";
       }
       if (searchText) {
         filters.searchText = searchText;
@@ -71,9 +72,13 @@ export default function RoomsTable() {
   };
 
   const handleDeleteRoom = async (roomId: string) => {
-    if (!confirm("Are you sure you want to permanently delete this room?")) {
-      return;
-    }
+    const confirmed = await confirmToast({
+      title: "Permanently delete this room?",
+      description: "This action cannot be undone.",
+      confirmLabel: "Delete",
+      tone: "danger",
+    });
+    if (!confirmed) return;
 
     try {
       setProcessingId(roomId);
@@ -92,19 +97,8 @@ export default function RoomsTable() {
     }
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case "approved":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "rejected":
-        return "bg-red-100 text-red-800";
-      case "archived":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  const getStatusBadgeColor = (isAvailable: boolean) => {
+    return isAvailable ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800";
   };
 
   const getImageUrl = (imagePath: string) => {
@@ -135,20 +129,19 @@ export default function RoomsTable() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Approval Status
+              Status
             </label>
             <select
-              value={approvalFilter}
+              value={statusFilter}
               onChange={(e) => {
-                setApprovalFilter(e.target.value);
+                setStatusFilter(e.target.value);
                 setPage(1);
               }}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+              <option value="available">Available</option>
+              <option value="rented">Rented</option>
             </select>
           </div>
 
@@ -259,10 +252,10 @@ export default function RoomsTable() {
                     <td className="px-6 py-4">
                       <span
                         className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeColor(
-                          room.approvalStatus
+                          room.isAvailable
                         )}`}
                       >
-                        {room.approvalStatus}
+                        {room.isAvailable ? "Available" : "Rented"}
                       </span>
                     </td>
                     <td className="px-6 py-4">
