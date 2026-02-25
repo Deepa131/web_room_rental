@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { toast } from "react-hot-toast";
 
 interface ProfilePictureSectionProps {
   fullName: string;
@@ -37,15 +38,9 @@ export default function ProfilePictureSection({
   
   // Initialize image state - runs only on client
   useEffect(() => {
-    // Debug: log what we're receiving
-    console.log("ProfilePictureSection - pendingImagePreview:", pendingImagePreview);
-    console.log("ProfilePictureSection - profilePicture:", profilePicture);
-    
     if (isValidImage(pendingImagePreview)) {
-      console.log("Setting image from pendingImagePreview");
       setImage(pendingImagePreview!);
     } else if (isValidImage(profilePicture)) {
-      console.log("Setting image from profilePicture");
       let imageUrl = profilePicture!;
       if (!imageUrl.startsWith('/public/') && !imageUrl.startsWith('http')) {
         imageUrl = `/public/${imageUrl.replace(/^\//, '')}`;
@@ -56,7 +51,6 @@ export default function ProfilePictureSection({
       }
       setImage(imageUrl);
     } else {
-      console.log("Setting image to null - no valid image");
       setImage(null);
     }
   }, [pendingImagePreview, profilePicture]);
@@ -98,13 +92,13 @@ export default function ProfilePictureSection({
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      alert("Please select a valid image file");
+      toast.error("Please select a valid image file");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB");
+      toast.error("File size must be less than 5MB");
       return;
     }
 
@@ -117,16 +111,14 @@ export default function ProfilePictureSection({
         const previewUrl = reader.result as string;
         setImage(previewUrl);
         
-        // Pass the File object and preview URL to parent
-        // This will NOT save to backend yet - only when Update Profile is clicked
+        // Pass the File object and preview URL to parent for actual upload on form submit
         onImageUpdate?.(file, previewUrl);
         
         setLoading(false);
       };
       reader.readAsDataURL(file);
     } catch (error) {
-      console.error("Failed to preview image:", error);
-      alert("Failed to load image preview. Please try again.");
+      toast.error("Failed to load image preview. Please try again.");
       setLoading(false);
     } finally {
       // Reset input
@@ -139,70 +131,68 @@ export default function ProfilePictureSection({
   const hasValidImage = isValidImage(image);
 
   return (
-    <div className="mb-8">
-      <div className="flex flex-col items-center">
-        {/* Profile Picture Circle */}
-        <div className="relative mb-6">
-          <div className="w-24 h-24 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center border-3 border-gray-700 shadow-lg overflow-hidden">
-            {hasValidImage ? (
-              <img
-                key={image}
-                src={image!}
-                alt={fullName}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-3xl font-bold text-white">
-                {getInitials(fullName)}
-              </span>
-            )}
-          </div>
-
-          {loading && (
-            <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
-              <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
-            </div>
+    <div className="flex flex-col items-center">
+      {/* Profile Picture Circle */}
+      <div className="relative mb-4">
+        <div className="w-28 h-28 rounded-full bg-linear-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-xl overflow-hidden ring-4 ring-white">
+          {hasValidImage ? (
+            <img
+              key={image}
+              src={image!}
+              alt={fullName}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-4xl font-bold text-white">
+              {getInitials(fullName)}
+            </span>
           )}
         </div>
 
-        {/* Photo Buttons */}
-        <div className="flex gap-3 mb-6">
+        {loading && (
+          <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+            <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
+          </div>
+        )}
+      </div>
+
+      {/* User Info */}
+      <div className="text-center mb-4">
+        <h2 className="text-2xl font-bold text-gray-900">{fullName}</h2>
+        <p className="text-gray-600 text-sm mt-1">{email}</p>
+      </div>
+
+      {/* Photo Buttons */}
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={handleChoosePhoto}
+          disabled={loading}
+          className="px-5 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Change Photo
+        </button>
+        {hasValidImage && (
           <button
             type="button"
-            onClick={handleChoosePhoto}
+            onClick={handleRemovePhoto}
             disabled={loading}
-            className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-5 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Choose photo
+            Remove
           </button>
-          {hasValidImage && (
-            <button
-              type="button"
-              onClick={handleRemovePhoto}
-              disabled={loading}
-              className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Remove photo
-            </button>
-          )}
-        </div>
-
-        {/* Hidden File Input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="hidden"
-          disabled={loading}
-        />
-
-        {/* User Info */}
-        <div className="text-center">
-          <h3 className="text-xl font-bold text-gray-900">{fullName}</h3>
-          <p className="text-gray-600 text-sm mt-1">{email}</p>
-        </div>
+        )}
       </div>
+
+      {/* Hidden File Input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+        disabled={loading}
+      />
     </div>
   );
 }
