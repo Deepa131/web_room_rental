@@ -3,11 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import ThemeToggle from "./ThemeToggle";
 
-const NAV_LINKS = [
-  { href: "/", label: "Home" },
-];
+const NAV_LINKS: { href: string; label: string }[] = [];
 
 export default function Header() {
   const pathname = usePathname();
@@ -17,7 +14,7 @@ export default function Header() {
     href === "/" ? pathname === "/" : pathname?.startsWith(href);
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-black/10 dark:border-white/10">
+    <header className="sticky top-0 z-40 bg-white shadow-md border-b border-gray-100">
       <nav
         className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
         aria-label="Global"
@@ -26,10 +23,10 @@ export default function Header() {
 
           <div className="flex items-center gap-2">
             <Link href="/" className="flex items-center gap-2 group">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-blue-600 text-white font-semibold">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-linear-to-br from-blue-600 to-blue-700 text-white font-bold text-sm shadow-md group-hover:shadow-lg transition-shadow">
                 R
               </span>
-              <span className="text-base font-semibold tracking-tight group-hover:opacity-80 transition-opacity">
+              <span className="font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
                 RentEasy
               </span>
             </Link>
@@ -41,10 +38,10 @@ export default function Header() {
                 key={link.href}
                 href={link.href}
                 className={
-                  "text-sm font-medium transition-colors hover:text-foreground/80 " +
+                  "text-sm font-medium transition-colors " +
                   (isActive(link.href)
-                    ? "text-foreground"
-                    : "text-foreground/60")
+                    ? "text-gray-900"
+                    : "text-gray-600 hover:text-gray-900")
                 }
               >
                 {link.label}
@@ -56,7 +53,7 @@ export default function Header() {
             <div className="hidden sm:flex items-center gap-2">
               <Link
                 href="/login"
-                className="h-9 px-3 inline-flex items-center justify-center rounded-md border border-black/10 dark:border-white/15 text-sm font-medium hover:bg-foreground/5 transition-colors"
+                className="h-9 px-3 inline-flex items-center justify-center rounded-md border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Login
               </Link>
@@ -68,14 +65,12 @@ export default function Header() {
               </Link>
             </div>
 
-            <ThemeToggle />
-
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
               aria-label="Toggle menu"
               aria-expanded={open}
-              className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md border border-black/10 dark:border-white/15 hover:bg-foreground/5 transition-colors"
+              className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
             >
               {open ? (
                 <svg
@@ -114,7 +109,7 @@ export default function Header() {
             (open ? "max-h-96" : "max-h-0")
           }
         >
-          <div className="pb-4 pt-2 border-t border-black/10 dark:border-white/10">
+          <div className="pb-4 pt-2 border-t border-gray-100">
             <div className="flex flex-col gap-2">
               {NAV_LINKS.map((link) => (
                 <Link
@@ -122,10 +117,10 @@ export default function Header() {
                   href={link.href}
                   onClick={() => setOpen(false)}
                   className={
-                    "rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-foreground/5 " +
+                    "rounded-md px-2 py-2 text-sm font-medium transition-colors " +
                     (isActive(link.href)
-                      ? "text-foreground"
-                      : "text-foreground/70")
+                      ? "text-gray-900 bg-gray-100"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900")
                   }
                 >
                   {link.label}
@@ -135,7 +130,7 @@ export default function Header() {
               <div className="mt-2 flex items-center gap-2">
                 <Link
                   href="/login"
-                  className="flex-1 h-9 px-3 inline-flex items-center justify-center rounded-md border border-black/10 dark:border-white/15 text-sm font-medium hover:bg-foreground/5 transition-colors"
+                  className="flex-1 h-9 px-3 inline-flex items-center justify-center rounded-md border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   Login
                 </Link>
