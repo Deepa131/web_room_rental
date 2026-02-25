@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { roomApi, RoomType } from "@/lib/api/room";
-import { Home, X, Loader2, Image as ImageIcon, Video } from "lucide-react";
+import { X, Loader2, Image as ImageIcon, Video } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 export default function AdminEditRoomPage() {
@@ -87,6 +87,17 @@ export default function AdminEditRoomPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+    if (name === "ownerContactNumber") {
+      const digitsOnly = value.replace(/\D/g, "");
+      if (digitsOnly.length > 10) return;
+      setFormData((prev) => ({ ...prev, [name]: digitsOnly }));
+      return;
+    }
+    if (name === "monthlyPrice") {
+      const normalized = value.replace(/[^0-9]/g, "");
+      setFormData((prev) => ({ ...prev, [name]: normalized }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -119,7 +130,7 @@ export default function AdminEditRoomPage() {
       setPreviewImages((prev) => [...prev, ...previews]);
       toast.success(`${uploadedImages.length} image(s) uploaded successfully`);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to upload images");
+      toast.error(error?.response?.data?.message || "Failed to upload image");
     } finally {
       setUploadingImages(false);
     }
@@ -154,7 +165,7 @@ export default function AdminEditRoomPage() {
       setPreviewVideos((prev) => [...prev, ...previews]);
       toast.success(`${uploadedVideos.length} video(s) uploaded successfully`);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to upload videos");
+      toast.error(error?.response?.data?.message || "Failed to upload video");
     } finally {
       setUploadingVideos(false);
     }
@@ -184,18 +195,40 @@ export default function AdminEditRoomPage() {
       return;
     }
 
+    if (!formData.ownerContactNumber.trim()) {
+      toast.error("Contact number is required");
+      return;
+    } else if (!/^(96|97|98)\d{8}$/.test(formData.ownerContactNumber)) {
+      toast.error("Invalid phone number format.");
+      return;
+    }
+
+    const priceValue = Number(formData.monthlyPrice);
+    if (!Number.isFinite(priceValue)) {
+      toast.error("Invalid monthly price");
+      return;
+    }
+    if (priceValue < 500) {
+      toast.error("Monthly price must be at least NPR 500");
+      return;
+    }
+    if (priceValue > 1000000) {
+      toast.error("Monthly price must be NPR 1,000,000 or less");
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await roomApi.updateRoom(roomId, {
         ownerContactNumber: formData.ownerContactNumber,
         roomTitle: formData.roomTitle,
-        monthlyPrice: Number(formData.monthlyPrice),
+        monthlyPrice: priceValue,
         location: formData.location,
         roomType: formData.roomType,
         description: formData.description,
         images: formData.images,
         videos: formData.videos,
-      } as any);
+      } as const);
 
       if (response.success) {
         toast.success("Room updated successfully!");
@@ -210,10 +243,10 @@ export default function AdminEditRoomPage() {
 
   if (fetchingRoom) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading room details...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
+          <p className="text-gray-600 mt-4">Loading room details...</p>
         </div>
       </div>
     );
@@ -221,16 +254,16 @@ export default function AdminEditRoomPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
             Edit Room
           </h1>
-          <p className="text-gray-700 mt-1">Update room details</p>
+          <p className="text-gray-600 mt-2">Update room details</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -245,8 +278,7 @@ export default function AdminEditRoomPage() {
                   onChange={handleInputChange}
                   required
                   placeholder="e.g., 1BHK room in Kapan"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
               </div>
 
               <div>
@@ -258,10 +290,12 @@ export default function AdminEditRoomPage() {
                   name="monthlyPrice"
                   value={formData.monthlyPrice}
                   onChange={handleInputChange}
+                  min={1000}
+                  max={1000000}
+                  inputMode="numeric"
                   required
                   placeholder="e.g., 15000"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
               </div>
 
               <div>
@@ -275,8 +309,7 @@ export default function AdminEditRoomPage() {
                   onChange={handleInputChange}
                   required
                   placeholder="e.g., Kathmandu"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
               </div>
 
               <div>
@@ -288,8 +321,7 @@ export default function AdminEditRoomPage() {
                   value={formData.roomType}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                   <option value="">Select Room Type</option>
                   {roomTypes.map((type) => (
                     <option key={type.id} value={type.id}>
@@ -304,13 +336,15 @@ export default function AdminEditRoomPage() {
                   Owner Contact Number
                 </label>
                 <input
-                  type="text"
+                  type="tel"
                   name="ownerContactNumber"
                   value={formData.ownerContactNumber}
                   onChange={handleInputChange}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={10}
                   placeholder="e.g., 98XXXXXXXX"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
               </div>
 
               <div className="md:col-span-2">
@@ -323,8 +357,7 @@ export default function AdminEditRoomPage() {
                   onChange={handleInputChange}
                   rows={4}
                   placeholder="Describe the room, amenities, and rules"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
               </div>
             </div>
           </div>
@@ -353,8 +386,7 @@ export default function AdminEditRoomPage() {
                       type="button"
                       onClick={() => removeImage(idx)}
                       className="absolute top-2 right-2 bg-white/90 text-red-600 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Remove image"
-                    >
+                      title="Remove image">
                       <X size={16} />
                     </button>
                   </div>
@@ -387,8 +419,7 @@ export default function AdminEditRoomPage() {
                       type="button"
                       onClick={() => removeVideo(idx)}
                       className="absolute top-2 right-2 bg-white/90 text-red-600 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Remove video"
-                    >
+                      title="Remove video">
                       <X size={16} />
                     </button>
                   </div>
@@ -401,15 +432,13 @@ export default function AdminEditRoomPage() {
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-            >
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60"
-            >
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60">
               {loading ? "Updating..." : "Update Room"}
             </button>
           </div>
