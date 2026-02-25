@@ -4,7 +4,7 @@ import Header from "./(public)/_components/Header";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-transparent">
       <Header />
 
       <section className="relative flex items-center px-6 md:px-16 min-h-[calc(100vh-4rem)]">
