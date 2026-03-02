@@ -8,6 +8,7 @@ export const API = {
         UPDATE_PROFILE: (id: string) => `/api/auth/${id}`,
     },
     USER: {
+        CREATE: '/api/admin/users',
         GET_ALL: '/api/admin/users',
         GET_BY_ID: (id: string) => `/api/admin/users/${id}`,
         UPDATE: (id: string) => `/api/admin/users/${id}`,
