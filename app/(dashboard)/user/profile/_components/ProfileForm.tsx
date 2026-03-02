@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateProfile } from "@/lib/api/auth";
+import { submitUserProfileUpdate } from "@/lib/actions/user/profile_actions";
+import { toast } from "react-hot-toast";
 
 interface UserData {
   _id: string;
@@ -36,46 +37,18 @@ export default function ProfileForm({ initialData, pendingImageFile, imageRemove
     setSuccess("");
 
     try {
-      const formData = new FormData();
-      formData.append("fullName", fullName);
-      
-      // If there's a pending image file, include it in the update
-      if (pendingImageFile) {
-        formData.append("profilePicture", pendingImageFile);
-      } else if (imageRemoved) {
-        // Send null to indicate photo should be removed
-        formData.append("profilePicture", "null");
-      }
-
-      const response = await updateProfile(initialData._id, formData);
+      const response = await submitUserProfileUpdate(
+        initialData._id,
+        fullName,
+        pendingImageFile,
+        imageRemoved,
+        initialData.profilePicture
+      );
 
       if (response.success && response.data) {
+        toast.success(response.message || "Profile updated successfully");
         setSuccess("Profile updated successfully");
-        
-        // CRITICAL: Check if profilePicture was actually updated
-        if (pendingImageFile && !response.data.profilePicture) {
-          setError("Image upload may have failed. Please try again.");
-          setLoading(false);
-          return;
-        }
-        
-        if (pendingImageFile && response.data.profilePicture === initialData.profilePicture) {
-          setError("Image upload failed. Please try again.");
-          setLoading(false);
-          return;
-        }
-        
-        // Update localStorage with the latest user data from response
-        if (typeof window !== 'undefined') {
-          localStorage.setItem("user_data", JSON.stringify(response.data));
-          
-          // Also update the cookie so the navbar reflects the changes immediately
-          document.cookie = `user_data=${encodeURIComponent(JSON.stringify(response.data))}; path=/; max-age=${60*60*24*30}`;
-          
-          // Dispatch custom event to notify navbar of profile changes
-          window.dispatchEvent(new Event('profilePictureUpdated'));
-        }
-        
+
         // Call parent callback with updated data to reload
         onSubmitSuccess?.(response.data);
         
@@ -83,10 +56,13 @@ export default function ProfileForm({ initialData, pendingImageFile, imageRemove
           router.refresh();
         }, 1000);
       } else {
+        toast.error(response.message || "Failed to update profile");
         setError(response.message || "Failed to update profile");
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to update profile");
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err.message : "Failed to update profile";
+      toast.error(error);
+      setError(error);
     } finally {
       setLoading(false);
     }
@@ -148,7 +124,7 @@ export default function ProfileForm({ initialData, pendingImageFile, imageRemove
         <button
           type="submit"
           disabled={loading}
-          className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full px-6 py-3 rounded-lg bg-linear-to-r from-blue-600 to-blue-700 text-white font-semibold hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">

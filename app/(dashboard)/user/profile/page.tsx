@@ -3,20 +3,16 @@
 import { useState, useEffect } from "react";
 import ProfileForm from "./_components/ProfileForm";
 import ProfilePictureSection from "./_components/ProfilePictureSection";
-
-interface UserData {
-  _id: string;
-  fullName: string;
-  email: string;
-  role: string;
-  profileImage?: string;
-  profilePicture?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import {
+  handleUserImageRemove,
+  handleUserImageUpdate,
+  handleUserProfileUpdate,
+  loadUserProfileData,
+  type DashboardUserData,
+} from "@/lib/actions/user/profile_actions";
 
 export default function ProfilePage() {
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const [userData, setUserData] = useState<DashboardUserData | null>(null);
   // Pending image state - stored in memory only, lost on navigation
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null);
@@ -24,26 +20,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   const loadUserData = () => {
-    // Get user data from localStorage first (most up-to-date after form submission)
-    const localStorageData = localStorage.getItem("user_data");
-    if (localStorageData) {
-      const parsed = JSON.parse(localStorageData);
-      setUserData(parsed);
-      return;
-    }
-    
-    // Fallback to cookie and sync to localStorage
-    const cookies = document.cookie.split("; ");
-    const userDataCookie = cookies.find((c) => c.startsWith("user_data="));
-    
-    if (userDataCookie) {
-      const userDataStr = decodeURIComponent(userDataCookie.split("=")[1]);
-      const parsed = JSON.parse(userDataStr);
-      setUserData(parsed);
-        
-      // Sync cookie data to localStorage for future access
-      localStorage.setItem("user_data", JSON.stringify(parsed));
-    }
+    const parsed = loadUserProfileData();
+    setUserData(parsed);
   };
 
   useEffect(() => {
@@ -59,27 +37,15 @@ export default function ProfilePage() {
   }, []);
 
   const handleImageUpdate = (file: File, previewUrl: string) => {
-    // Store the pending image file and preview IN MEMORY ONLY (not saved to backend yet)
-    // This will be lost if user navigates away without clicking "Update Profile"
-    setPendingImageFile(file);
-    setPendingImagePreview(previewUrl);
+    handleUserImageUpdate(file, previewUrl, setPendingImageFile, setPendingImagePreview);
   };
 
   const handleImageRemove = () => {
-    // Clear both pending and current image
-    setPendingImageFile(null);
-    setPendingImagePreview(null);
-    setImageRemoved(true);
+    handleUserImageRemove(setPendingImageFile, setPendingImagePreview, setImageRemoved);
   };
 
-  const handleProfileUpdate = (updatedData: UserData) => {
-    // Image is now SAVED to backend and localStorage - will persist across all pages
-    setUserData(updatedData);
-    
-    // Clear pending images since they're now permanently saved
-    setPendingImageFile(null);
-    setPendingImagePreview(null);
-    setImageRemoved(false);
+  const handleProfileUpdate = (updatedData: DashboardUserData) => {
+    handleUserProfileUpdate(updatedData, setUserData, setPendingImageFile, setPendingImagePreview, setImageRemoved);
   };
 
   if (loading) {
