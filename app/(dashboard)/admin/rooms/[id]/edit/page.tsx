@@ -2,9 +2,31 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { roomApi, RoomType } from "@/lib/api/room";
+import { RoomType } from "@/lib/api/room";
 import { X, Loader2, Image as ImageIcon, Video } from "lucide-react";
 import { toast } from "react-hot-toast";
+import {
+  fetchAdminActiveRoomTypes,
+  fetchAdminRoomById,
+  updateAdminRoom,
+  uploadAdminRoomImage,
+  uploadAdminRoomVideo,
+} from "@/lib/actions/admin/rooms_actions";
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error) return error.message;
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof (error as { response?: { data?: { message?: string } } }).response?.data
+      ?.message === "string"
+  ) {
+    return (error as { response?: { data?: { message?: string } } }).response?.data
+      ?.message as string;
+  }
+  return fallback;
+};
 
 export default function AdminEditRoomPage() {
   const router = useRouter();
@@ -34,13 +56,12 @@ export default function AdminEditRoomPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const roomTypesResponse = await roomApi.getRoomTypes();
+        const roomTypesResponse = await fetchAdminActiveRoomTypes();
         if (roomTypesResponse.success) {
-          const activeTypes = roomTypesResponse.data.filter((rt: RoomType) => rt.status === "active");
-          setRoomTypes(activeTypes);
+          setRoomTypes(roomTypesResponse.data as RoomType[]);
         }
 
-        const roomResponse = await roomApi.getRoomById(roomId);
+        const roomResponse = await fetchAdminRoomById(roomId);
         if (roomResponse.success) {
           const room = roomResponse.data;
           const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5050";
@@ -112,7 +133,7 @@ export default function AdminEditRoomPage() {
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const response = await roomApi.uploadImage(file);
+        const response = await uploadAdminRoomImage(file);
         if (response.success) {
           uploadedImages.push(response.data);
           previews.push({
@@ -129,8 +150,8 @@ export default function AdminEditRoomPage() {
       }));
       setPreviewImages((prev) => [...prev, ...previews]);
       toast.success(`${uploadedImages.length} image(s) uploaded successfully`);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to upload image");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to upload image"));
     } finally {
       setUploadingImages(false);
     }
@@ -147,7 +168,7 @@ export default function AdminEditRoomPage() {
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const response = await roomApi.uploadVideo(file);
+        const response = await uploadAdminRoomVideo(file);
         if (response.success) {
           uploadedVideos.push(response.data);
           previews.push({
@@ -164,8 +185,8 @@ export default function AdminEditRoomPage() {
       }));
       setPreviewVideos((prev) => [...prev, ...previews]);
       toast.success(`${uploadedVideos.length} video(s) uploaded successfully`);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to upload video");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to upload video"));
     } finally {
       setUploadingVideos(false);
     }
@@ -219,7 +240,7 @@ export default function AdminEditRoomPage() {
 
     setLoading(true);
     try {
-      const response = await roomApi.updateRoom(roomId, {
+      const response = await updateAdminRoom(roomId, {
         ownerContactNumber: formData.ownerContactNumber,
         roomTitle: formData.roomTitle,
         monthlyPrice: priceValue,
@@ -234,8 +255,8 @@ export default function AdminEditRoomPage() {
         toast.success("Room updated successfully!");
         window.location.href = "/admin/rooms";
       }
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to update room");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to update room"));
     } finally {
       setLoading(false);
     }

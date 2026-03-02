@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Trash2, Edit2, Search, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { getAllUsers, deleteUser } from "@/lib/api/auth";
+import { deleteAdminUser, fetchAdminUsers } from "@/lib/actions/admin/users_actions";
 import { toast } from "react-hot-toast";
 import { confirmToast } from "@/lib/ui/toast";
 
@@ -30,7 +30,7 @@ export default function UsersTable() {
     try {
       setLoading(true);
       setError("");
-      const response = await getAllUsers(page, limit);
+      const response = await fetchAdminUsers(page, limit);
       if (response.success) {
         setUsers(response.data);
         setTotal(response.meta?.total || 0);
@@ -62,7 +62,7 @@ export default function UsersTable() {
 
     try {
       setDeletingId(userId);
-      const response = await deleteUser(userId);
+      const response = await deleteAdminUser(userId);
       if (response.success) {
         // Remove user from the list
         setUsers(users.filter(user => user._id !== userId));

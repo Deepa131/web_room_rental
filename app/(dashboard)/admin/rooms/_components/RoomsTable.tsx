@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { roomApi, Room } from "@/lib/api/room";
+import { Room } from "@/lib/api/room";
 import { toast } from "react-hot-toast";
 import { Trash2, Eye, Edit } from "lucide-react";
 import { confirmToast } from "@/lib/ui/toast";
+import {
+  deleteAdminRoom,
+  fetchAdminRooms,
+  getAdminRoomImageUrl,
+} from "@/lib/actions/admin/rooms_actions";
 
 interface PaginatedResponse {
   success: boolean;
@@ -15,6 +20,30 @@ interface PaginatedResponse {
   page: number;
   count: number;
 }
+
+interface RoomFilters {
+  isAvailable?: boolean;
+  searchText?: string;
+}
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  return error instanceof Error ? error.message : fallback;
+};
+
+const getRoomOwnerName = (ownerId: Room["ownerId"]) => {
+  const ownerValue = ownerId as unknown;
+  if (
+    ownerValue &&
+    typeof ownerValue === "object" &&
+    "fullName" in ownerValue
+  ) {
+    return String(
+      (ownerValue as { fullName?: string }).fullName || ""
+    );
+  }
+
+  return String(ownerId || "");
+};
 
 export default function RoomsTable() {
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -31,6 +60,7 @@ export default function RoomsTable() {
 
   useEffect(() => {
     fetchRooms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, limit, statusFilter, searchText]);
 
   const fetchRooms = async () => {
@@ -40,7 +70,7 @@ export default function RoomsTable() {
       }
       setError("");
 
-      const filters: any = {};
+      const filters: RoomFilters = {};
       if (statusFilter !== "all") {
         filters.isAvailable = statusFilter === "available";
       }
@@ -48,7 +78,7 @@ export default function RoomsTable() {
         filters.searchText = searchText;
       }
 
-      const response = (await roomApi.adminGetAllRooms(
+      const response = (await fetchAdminRooms(
         page,
         limit,
         filters
@@ -61,8 +91,8 @@ export default function RoomsTable() {
       } else {
         setError("Failed to fetch rooms");
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch rooms");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to fetch rooms"));
     } finally {
       if (!hasLoaded) {
         setLoading(false);
@@ -82,7 +112,7 @@ export default function RoomsTable() {
 
     try {
       setProcessingId(roomId);
-      const response = await roomApi.adminDeleteRoom(roomId);
+      const response = await deleteAdminRoom(roomId);
 
       if (response.success) {
         toast.success("Room deleted successfully");
@@ -90,8 +120,8 @@ export default function RoomsTable() {
       } else {
         toast.error(response.message || "Failed to delete room");
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete room");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to delete room"));
     } finally {
       setProcessingId(null);
     }
@@ -99,18 +129,6 @@ export default function RoomsTable() {
 
   const getStatusBadgeColor = (isAvailable: boolean) => {
     return isAvailable ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800";
-  };
-
-  const getImageUrl = (imagePath: string) => {
-    if (!imagePath) return "/placeholder-room.jpg";
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5050";
-    if (!imagePath.startsWith("/public/") && !imagePath.startsWith("http")) {
-      return `${apiBaseUrl}/public/room_images/${imagePath}`;
-    }
-    if (!imagePath.startsWith("http")) {
-      return `${apiBaseUrl}${imagePath}`;
-    }
-    return imagePath;
   };
 
   if (loading) {
@@ -212,7 +230,7 @@ export default function RoomsTable() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <img
-                          src={getImageUrl(
+                          src={getAdminRoomImageUrl(
                             room.images?.[0] || "/placeholder-room.jpg"
                           )}
                           alt={room.roomTitle}
@@ -232,9 +250,7 @@ export default function RoomsTable() {
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-medium text-gray-900">
-                          {room.ownerId && typeof room.ownerId === "object"
-                            ? (room.ownerId as any).fullName
-                            : room.ownerId}
+                          {getRoomOwnerName(room.ownerId)}
                         </p>
                         <p className="text-sm text-gray-500">
                           {room.ownerContactNumber}

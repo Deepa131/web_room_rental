@@ -3,18 +3,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, ArrowLeft, Play, User, Phone,MapPin,CheckCircle2,BadgeCheck,Home } from "lucide-react";
-import { roomApi } from "@/lib/api/room";
+import { Room } from "@/lib/api/room";
+import {
+  fetchAdminRoomById,
+  getAdminRoomImageUrl,
+  getAdminRoomVideoUrl,
+} from "@/lib/actions/admin/rooms_actions";
 
-const getImageUrl = (imagePath: string) => {
-  if (!imagePath) return "/placeholder-room.jpg";
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5050";
-  return `${apiBaseUrl}/public/room_images/${imagePath}`;
-};
-
-const getVideoUrl = (videoPath: string) => {
-  if (!videoPath) return "";
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5050";
-  return `${apiBaseUrl}/public/room_videos/${videoPath}`;
+type RoomDetails = Omit<Partial<Room>, "ownerId" | "roomType"> & {
+  ownerId?: string | { fullName?: string };
+  ownerName?: string;
+  roomType?: string | { typeName?: string };
+  images?: string[];
+  videos?: string[];
 };
 
 export default function AdminRoomDetailsPage() {
@@ -22,14 +23,14 @@ export default function AdminRoomDetailsPage() {
   const router = useRouter();
   const roomId = params.id as string;
   const [loading, setLoading] = useState(true);
-  const [room, setRoom] = useState<any>(null);
+  const [room, setRoom] = useState<RoomDetails | null>(null);
   const [mediaIndex, setMediaIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     const fetchRoom = async () => {
       try {
-        const response = await roomApi.getRoomById(roomId);
+        const response = await fetchAdminRoomById(roomId);
         if (response?.success) {
           setRoom(response.data);
         }
@@ -44,18 +45,21 @@ export default function AdminRoomDetailsPage() {
     if (!room) return [] as { type: "image" | "video"; src: string }[];
     const images = (room.images || []).map((img: string) => ({
       type: "image" as const,
-      src: getImageUrl(img),
+      src: getAdminRoomImageUrl(img),
     }));
     const videos = (room.videos || []).map((vid: string) => ({
       type: "video" as const,
-      src: getVideoUrl(vid),
+      src: getAdminRoomVideoUrl(vid),
     }));
     return [...images, ...videos];
   }, [room]);
 
   const currentMedia = mediaItems[mediaIndex];
 
-  const ownerName = room?.ownerId?.fullName || room?.ownerName || "Owner";
+  const ownerName =
+    room?.ownerId && typeof room.ownerId === "object" && "fullName" in room.ownerId
+      ? String(room.ownerId.fullName || "Owner")
+      : (typeof room?.ownerId === "string" ? room.ownerId : room?.ownerName) || "Owner";
   const ownerPhone = room?.ownerContactNumber || "N/A";
   const roomType =
     typeof room?.roomType === "string"

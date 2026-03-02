@@ -38,13 +38,38 @@ export default function AdminSidebar({ userName, profilePicture }: AdminSidebarP
   }, []);
 
   const getInitials = (name?: string) => {
-    if (!name) return "A";
-    return name.split(" ").map((n) => n[0]).join("").toUpperCase();
+    if (!name || typeof name !== 'string') return "A";
+    const cleanName = name.trim();
+    if (!cleanName) return "A";
+    
+    const parts = cleanName.split(/\s+/);
+    
+    // If only one word, return first letter
+    if (parts.length === 1) {
+      return parts[0].charAt(0).toUpperCase();
+    }
+    
+    // Return first letter of FIRST word + first letter of LAST word
+    const first = parts[0].charAt(0).toUpperCase();
+    const last = parts[parts.length - 1].charAt(0).toUpperCase();
+    
+    return first + last;
+  };
+
+  const isValidImage = (img: string | null | undefined): boolean => {
+    if (!img) return false;
+    if (typeof img !== 'string') return false;
+    const trimmed = img.trim();
+    if (trimmed === '') return false;
+    if (trimmed === 'null' || trimmed === 'undefined') return false;
+    // Treat default profile picture as "no image"
+    if (trimmed === 'default-profile.png' || trimmed.includes('default')) return false;
+    return true;
   };
 
   const getProfileImageUrl = () => {
-    if (!currentProfilePicture) return null;
-    let imageUrl = currentProfilePicture;
+    if (!isValidImage(currentProfilePicture)) return null;
+    let imageUrl = currentProfilePicture!;
     
     if (!imageUrl.startsWith('/public/') && !imageUrl.startsWith('http')) {
       imageUrl = `/public/${imageUrl.replace(/^\//, '')}`;

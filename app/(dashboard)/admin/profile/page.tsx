@@ -3,75 +3,31 @@
 import { useState } from "react";
 import ProfileForm from "./_components/ProfileForm";
 import ProfilePictureSection from "./_components/ProfilePictureSection";
-
-interface UserData {
-  _id: string;
-  fullName: string;
-  email: string;
-  role: string;
-  profileImage?: string;
-  profilePicture?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import {
+  handleImageRemove as clearPendingImage,
+  handleImageUpdate,
+  handleProfileUpdate,
+  loadUserDataFromStorage,
+  type DashboardUserData,
+} from "@/lib/actions/admin/profile_actions";
 
 export default function ProfilePage() {
-  const [userData, setUserData] = useState<UserData | null>(() => {
-    // Initialize from localStorage on mount
-    if (typeof window !== 'undefined') {
-      const localStorageData = localStorage.getItem("user_data");
-      if (localStorageData) {
-        try {
-          return JSON.parse(localStorageData);
-        } catch (e) {
-          console.error("Failed to parse user data from localStorage:", e);
-        }
-      }
-      
-      // Fallback to cookie
-      const cookies = document.cookie.split("; ");
-      const userDataCookie = cookies.find((c) => c.startsWith("user_data="));
-      
-      if (userDataCookie) {
-        try {
-          const userDataStr = decodeURIComponent(userDataCookie.split("=")[1]);
-          const parsed = JSON.parse(userDataStr);
-          // Sync cookie data to localStorage for future access
-          localStorage.setItem("user_data", JSON.stringify(parsed));
-          return parsed;
-        } catch (e) {
-          console.error("Failed to parse user data from cookie:", e);
-        }
-      }
-    }
-    return null;
-  });
+  const [userData, setUserData] = useState<DashboardUserData | null>(() => loadUserDataFromStorage());
   // Pending image state - stored in memory only, lost on navigation
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null);
   const [imageRemoved, setImageRemoved] = useState(false);
 
-  const handleImageUpdate = (file: File, previewUrl: string) => {
-    // Store the pending image file and preview IN MEMORY ONLY 
-    // This will be lost if user navigates away without clicking "Update Profile"
-    setPendingImageFile(file);
-    setPendingImagePreview(previewUrl);
-  };
-
   const handleImageRemove = () => {
-    // Clear both pending and current image
-    setPendingImageFile(null);
-    setPendingImagePreview(null);
-    setImageRemoved(true);
+    clearPendingImage(setPendingImageFile, setPendingImagePreview, setImageRemoved);
   };
 
-  const handleProfileUpdate = (updatedData: UserData) => {
-    setUserData(updatedData);
-    
-    // Clear pending images since they're now permanently saved
-    setPendingImageFile(null);
-    setPendingImagePreview(null);
-    setImageRemoved(false);
+  const handleImageUpdateWrapper = (file: File, previewUrl: string) => {
+    handleImageUpdate(file, previewUrl, setPendingImageFile, setPendingImagePreview);
+  };
+
+  const handleProfileUpdateWrapper = (updatedData: DashboardUserData) => {
+    handleProfileUpdate(updatedData, setUserData, setPendingImageFile, setPendingImagePreview, setImageRemoved);
   };
 
   if (!userData) {
@@ -105,7 +61,7 @@ export default function ProfilePage() {
               email={userData.email}
               profilePicture={userData.profilePicture || userData.profileImage}
               pendingImagePreview={pendingImagePreview}
-              onImageUpdate={handleImageUpdate}
+              onImageUpdate={handleImageUpdateWrapper}
               onImageRemove={handleImageRemove}
             />
           </div>
@@ -116,7 +72,7 @@ export default function ProfilePage() {
               initialData={userData} 
               pendingImageFile={pendingImageFile}
               imageRemoved={imageRemoved}
-              onSubmitSuccess={handleProfileUpdate} 
+              onSubmitSuccess={handleProfileUpdateWrapper} 
             />
           </div>
         </div>

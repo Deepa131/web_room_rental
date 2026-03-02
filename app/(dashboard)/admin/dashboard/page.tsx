@@ -33,7 +33,7 @@ export default async function AdminDashboardPage() {
               <div>
                 <h3 className="font-semibold text-gray-900 text-sm">Manage Rooms</h3>
                 <p className="text-xs text-gray-600">
-                  Approve, reject & manage all rooms
+                  Update, delete & manage all rooms
                 </p>
               </div>
             </div>

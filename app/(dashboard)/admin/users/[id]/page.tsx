@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChevronLeft, Edit2, Mail, Calendar, Shield } from "lucide-react";
-import { getUserById } from "@/lib/api/auth";
+import { fetchAdminUserById } from "@/lib/actions/admin/users_actions";
 import { useParams } from "next/navigation";
 
 interface UserData {
@@ -27,14 +27,15 @@ export default function UserDetailPage() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await getUserById(userId);
+        const response = await fetchAdminUserById(userId);
         if (response.success) {
           setUser(response.data);
         } else {
           setError(response.message || "Failed to fetch user");
         }
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch user");
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err.message : "Failed to fetch user";
+        setError(error);
       } finally {
         setLoading(false);
       }

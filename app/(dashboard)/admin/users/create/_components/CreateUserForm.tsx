@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createUser } from "@/lib/api/auth";
+import { createAdminUser } from "@/lib/actions/admin/users_actions";
+import { toast } from "react-hot-toast";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
@@ -66,18 +67,22 @@ export default function CreateUserForm() {
         form.append("profilePicture", profileImage);
       }
 
-      const response = await createUser(form);
+      const response = await createAdminUser(form);
 
       if (response.success) {
+        toast.success(response.message || "User created successfully");
         setSuccess("User created successfully");
         setTimeout(() => {
           router.push("/admin/users");
         }, 1500);
       } else {
+        toast.error(response.message || "Failed to create user");
         setError(response.message || "Failed to create user");
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to create user");
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err.message : "Failed to create user";
+      toast.error(error);
+      setError(error);
     } finally {
       setLoading(false);
     }
