@@ -30,10 +30,12 @@ export default function OwnerDashboardPage() {
       const user = userDataStr ? JSON.parse(userDataStr) : null;
       setUserData(user);
 
-      if (user?._id) {
+      const ownerId = user?._id || user?.id;
+
+      if (ownerId) {
         const [roomsResponse, appointmentsResponse] = await Promise.all([
-          roomApi.getRoomsByOwner(user._id),
-          appointmentApi.getOwnerAppointments(user._id),
+          roomApi.getRoomsByOwner(ownerId),
+          appointmentApi.getOwnerAppointments(ownerId),
         ]);
 
         if (roomsResponse?.success) {
