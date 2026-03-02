@@ -28,24 +28,19 @@ export default function DashboardHeader({ userRole, userName, profilePicture }: 
     const updateProfilePicture = () => {
       const userData = localStorage.getItem('user_data');
       if (userData) {
-        try {
-          const parsed = JSON.parse(userData);
-          if (parsed.profilePicture) {
-            setCurrentProfilePicture(parsed.profilePicture);
-          }
-        } catch (e) {
-          // Failed to parse user data
+        const parsed = JSON.parse(userData);
+        if (parsed.profilePicture) {
+          setCurrentProfilePicture(parsed.profilePicture);
         }
       }
     };
 
-    // Initial load
     updateProfilePicture();
 
-    // Listen for storage events (updates from other tabs)
+    // Listen for storage events 
     window.addEventListener('storage', updateProfilePicture);
 
-    // Listen for custom event (updates from same tab)
+    // Listen for custom event 
     window.addEventListener('profilePictureUpdated', updateProfilePicture);
 
     return () => {
@@ -55,17 +50,37 @@ export default function DashboardHeader({ userRole, userName, profilePicture }: 
   }, []);
 
   const getInitials = (name?: string) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
+    if (!name || typeof name !== 'string') return "U";
+    const cleanName = name.trim();
+    if (!cleanName) return "U";
+    
+    const parts = cleanName.split(/\s+/);
+    
+    if (parts.length === 1) {
+      return parts[0].charAt(0).toUpperCase();
+    }
+    
+    // Return first letter of FIRST word + first letter of LAST word
+    const first = parts[0].charAt(0).toUpperCase();
+    const last = parts[parts.length - 1].charAt(0).toUpperCase();
+    
+    return first + last;
+  };
+
+  const isValidImage = (img: string | null | undefined): boolean => {
+    if (!img) return false;
+    if (typeof img !== 'string') return false;
+    const trimmed = img.trim();
+    if (trimmed === '') return false;
+    if (trimmed === 'null' || trimmed === 'undefined') return false;
+    // Treat default profile picture as "no image"
+    if (trimmed === 'default-profile.png' || trimmed.includes('default')) return false;
+    return true;
   };
 
   const getProfileImageUrl = () => {
-    if (!currentProfilePicture) return null;
-    let imageUrl = currentProfilePicture;
+    if (!isValidImage(currentProfilePicture)) return null;
+    let imageUrl = currentProfilePicture!;
     
     // Ensure /public/ prefix exists for static file serving
     if (!imageUrl.startsWith('/public/') && !imageUrl.startsWith('http')) {
@@ -103,10 +118,10 @@ export default function DashboardHeader({ userRole, userName, profilePicture }: 
             {/* Logo */}
             <div className="flex items-center gap-2">
               <Link href={dashboardHref} className="flex items-center gap-2 group">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 text-white font-bold text-sm shadow-md group-hover:shadow-lg transition-shadow">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-linear-to-br from-blue-600 to-blue-700 text-white font-bold text-sm shadow-md group-hover:shadow-lg transition-shadow">
                   R
                 </span>
-                <span className="font-bold text-gray-900 hidden sm:inline bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">RentEasy</span>
+                <span className="font-bold text-gray-900 hidden sm:inline bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text">RentEasy</span>
               </Link>
             </div>
 
@@ -141,7 +156,7 @@ export default function DashboardHeader({ userRole, userName, profilePicture }: 
                 {(() => {
                   const profileImageUrl = getProfileImageUrl();
                   return (
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center border-2 border-blue-700 shadow-md overflow-hidden flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center border-2 border-blue-700 shadow-md overflow-hidden flex-shrink-0">
                       {profileImageUrl ? (
                         <img
                           src={profileImageUrl}
@@ -215,7 +230,7 @@ export default function DashboardHeader({ userRole, userName, profilePicture }: 
                   {(() => {
                     const profileImageUrl = getProfileImageUrl();
                     return (
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center border-2 border-blue-700 shadow-md overflow-hidden flex-shrink-0">
+                      <div className="w-12 h-12 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center border-2 border-blue-700 shadow-md overflow-hidden flex-shrink-0">
                         {profileImageUrl ? (
                           <img
                             src={profileImageUrl}
