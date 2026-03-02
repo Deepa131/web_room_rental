@@ -82,8 +82,38 @@ export const roomApi = {
 
     // Get rooms by owner
     getRoomsByOwner: async (ownerId: string) => {
-        const response = await axios.get(API.ROOM.GET_BY_OWNER(ownerId));
-        return response.data;
+        try {
+            const response = await axios.get(API.ROOM.GET_BY_OWNER(ownerId));
+            return response.data;
+        } catch (error: any) {
+            if (error?.response?.status === 404) {
+                const fallbackResponse = await axios.get(API.ROOM.GET_ALL, {
+                    params: { ownerId },
+                });
+
+                const payload = fallbackResponse.data;
+                if (!payload?.success) {
+                    return payload;
+                }
+
+                const rooms = Array.isArray(payload.data) ? payload.data : [];
+                const filteredRooms = rooms.filter((room: any) => {
+                    const roomOwnerId =
+                        typeof room?.ownerId === 'object'
+                            ? room?.ownerId?._id || room?.ownerId?.id
+                            : room?.ownerId;
+
+                    return String(roomOwnerId || '') === String(ownerId);
+                });
+
+                return {
+                    ...payload,
+                    data: filteredRooms,
+                };
+            }
+
+            throw error;
+        }
     },
 
     // Get all rooms (optional query params)
