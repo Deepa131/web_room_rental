@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { LoginData, loginSchema } from "../schema";
 import { Eye, EyeOff } from "lucide-react";
 import { handleLogin } from "@/lib/actions/auth-action";
+import { toast } from "react-hot-toast";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -32,6 +33,8 @@ export default function LoginForm() {
           throw new Error(response.message);
         }
         
+        toast.success(response.message || "Login successful!");
+        
         // Store token and user data in localStorage for axios interceptor and profile page
         if (typeof window !== 'undefined' && response.token) {
           localStorage.setItem('auth_token', response.token);
@@ -54,7 +57,9 @@ export default function LoginForm() {
           router.push("/renter/dashboard");
         }
       } catch (err: any) {
-        setError(err.message || "Login failed");
+        const errorMsg = err.message || "Login failed";
+        toast.error(errorMsg);
+        setError(errorMsg);
       }
     });
   };

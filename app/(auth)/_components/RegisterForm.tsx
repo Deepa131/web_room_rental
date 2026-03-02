@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { RegisterData, registerSchema } from "../schema";
 import { handleRegister } from "@/lib/actions/auth-action";
 import { useEffect } from "react";
+import { toast } from "react-hot-toast";
 
 
 interface RegisterFormProps {
@@ -46,10 +47,15 @@ export default function RegisterForm({ role }: RegisterFormProps) {
           throw new Error(response.message);
         }
 
+        toast.success(response.message || "Registration successful! Redirecting to login...");
         // Redirect to login page after registration
-        router.push("/login");
+        setTimeout(() => {
+          router.push("/login");
+        }, 1500);
       } catch (err: Error | any) {
-        setError(err.message || "Registration failed");
+        const errorMsg = err.message || "Registration failed";
+        toast.error(errorMsg);
+        setError(errorMsg);
       }
     });
   };

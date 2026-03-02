@@ -8,7 +8,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import { ResetPasswordData, resetPasswordSchema } from "../../schema";
-import { resetPassword } from "@/lib/api/auth";
+import { handleResetPassword } from "@/lib/actions/auth-action";
+import { toast } from "react-hot-toast";
 
 export default function ResetPasswordPage() {
   const params = useParams();
@@ -31,17 +32,14 @@ export default function ResetPasswordPage() {
   const submit = async (values: ResetPasswordData) => {
     setError(null);
     setMessage(null);
-
-    try {
-      const response = await resetPassword(token, values);
-      if (!response.success) {
-        throw new Error(response.message || "Reset failed");
-      }
-
+    const response = await handleResetPassword(token, values);
+    if (response.success) {
+      toast.success("Password updated successfully! Redirecting to login...");
       setMessage("Password updated successfully. Redirecting to login...");
       setTimeout(() => router.push("/login"), 1500);
-    } catch (err: Error | any) {
-      setError(err.message || "Reset failed");
+    } else {
+      toast.error(response.message || "Failed to reset password");
+      setError(response.message);
     }
   };
 

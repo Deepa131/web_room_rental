@@ -6,7 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import Image from "next/image";
 import { ForgotPasswordData, forgotPasswordSchema } from "../schema";
-import { forgotPassword } from "@/lib/api/auth";
+import { handleForgotPassword } from "@/lib/actions/auth-action";
+import { toast } from "react-hot-toast";
 
 export default function ForgotPasswordPage() {
   const [message, setMessage] = useState<string | null>(null);
@@ -24,15 +25,13 @@ export default function ForgotPasswordPage() {
   const submit = async (values: ForgotPasswordData) => {
     setError(null);
     setMessage(null);
-
-    try {
-      const response = await forgotPassword(values);
-      if (!response.success) {
-        throw new Error(response.message || "Failed to send reset email");
-      }
-      setMessage("Reset link sent. Check your email.");
-    } catch (err: Error | any) {
-      setError(err.message || "Failed to send reset email");
+    const response = await handleForgotPassword(values);
+    if (response.success) {
+      toast.success(response.message || "Reset link sent successfully!");
+      setMessage(response.message);
+    } else {
+      toast.error(response.message || "Failed to send reset link");
+      setError(response.message);
     }
   };
 
