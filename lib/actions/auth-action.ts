@@ -3,6 +3,8 @@ import { login, register } from "@/lib/api/auth"
 import { LoginData, RegisterData } from "@/app/(auth)/schema"
 import { setAuthToken, setUserData, clearAuthCookies } from "../cookie"
 import { redirect } from "next/navigation";
+import { forgotPassword as forgotPasswordApi, resetPassword as resetPasswordApi } from "@/lib/api/auth";
+import { ForgotPasswordData, ResetPasswordData } from "@/app/(auth)/schema";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@gmail.com";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Admin@123";
@@ -88,3 +90,27 @@ export const handleLogout = async () => {
     await clearAuthCookies();
     return redirect('/login');
 }
+
+export const handleForgotPassword = async (values: ForgotPasswordData) => {
+    try {
+        const response = await forgotPasswordApi(values);
+        if (!response.success) {
+            throw new Error(response.message || "Failed to send reset email");
+        }
+        return { success: true, message: "Reset link sent. Check your email." };
+    } catch (err: Error | any) {
+        return { success: false, message: err.message || "Failed to send reset email" };
+    }
+};
+
+export const handleResetPassword = async (token: string, values: ResetPasswordData) => {
+    try {
+        const response = await resetPasswordApi(token, values);
+        if (!response.success) {
+            throw new Error(response.message || "Reset failed");
+        }
+        return { success: true, message: "Password reset successful." };
+    } catch (err: Error | any) {
+        return { success: false, message: err.message || "Failed to reset password" };
+    }
+};
