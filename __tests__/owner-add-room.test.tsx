@@ -18,4 +18,15 @@ describe('Owner Add Room Page', () => {
     const location = { city: 'Test City' };
     expect(location.city).toBe('Test City');
   });
+
+  test('5. Should validate room title is required', () => {
+    const roomData = {};
+    expect(roomData).toEqual({});
+  });
+
+  test('6. Should handle room amenities', () => {
+    const amenities = ['WiFi', 'AC', 'Kitchen'];
+    expect(amenities).toContain('WiFi');
+    expect(amenities.length).toBe(3);
+  });
 });

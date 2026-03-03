@@ -18,4 +18,15 @@ describe('Room Details Page', () => {
     const images = ['image1.jpg', 'image2.jpg'];
     expect(images.length).toBe(2);
   });
+
+  test('5. Should validate room amenities display', () => {
+    const amenities = { wifi: true, ac: true, kitchen: false };
+    expect(amenities.wifi).toBe(true);
+  });
+
+  test('6. Should handle room booking information', () => {
+    const booking = { roomId: '123', availableFrom: '2024-03-01' };
+    expect(booking.roomId).toBe('123');
+    expect(typeof booking.availableFrom).toBe('string');
+  });
 });

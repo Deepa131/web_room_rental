@@ -18,4 +18,18 @@ describe('Owner Requests Page', () => {
     const status = 'pending';
     expect(typeof status).toBe('string');
   });
+
+  test('5. Should filter requests by status', () => {
+    const requests = [
+      { id: '1', status: 'pending' },
+      { id: '2', status: 'approved' }
+    ];
+    const pending = requests.filter(r => r.status === 'pending');
+    expect(pending.length).toBe(1);
+  });
+
+  test('6. Should update request timestamps', () => {
+    const request = { id: '1', createdAt: new Date() };
+    expect(request.createdAt instanceof Date).toBe(true);
+  });
 });

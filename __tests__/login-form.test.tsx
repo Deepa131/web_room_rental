@@ -5,6 +5,7 @@ import LoginForm from '@/app/(auth)/_components/LoginForm';
 import { handleLogin } from '@/lib/actions/auth-action';
 
 const mockPush = jest.fn();
+const mockHandleLogin = handleLogin as jest.Mock;
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -19,7 +20,7 @@ jest.mock('@/lib/actions/auth-action', () => ({
 describe('LoginForm Component', () => {
   beforeEach(() => {
     mockPush.mockClear();
-    handleLogin.mockClear();
+    mockHandleLogin.mockClear();
     localStorage.clear();
   });
 
@@ -53,6 +54,26 @@ describe('LoginForm Component', () => {
     expect(passwordInput.type).toBe('password');
     await user.click(toggleButton);
     expect(passwordInput.type).toBe('text');
+  });
+
+  test('5. Should accept email input', async () => {
+    const user = userEvent.setup();
+    render(<LoginForm />);
+    
+    const emailInput = screen.getByPlaceholderText('Enter your email') as HTMLInputElement;
+    await user.type(emailInput, 'test@example.com');
+    
+    expect(emailInput.value).toBe('test@example.com');
+  });
+
+  test('6. Should accept password input', async () => {
+    const user = userEvent.setup();
+    render(<LoginForm />);
+    
+    const passwordInput = screen.getByPlaceholderText('••••••••') as HTMLInputElement;
+    await user.type(passwordInput, 'password123');
+    
+    expect(passwordInput.value).toBe('password123');
   });
 
 });

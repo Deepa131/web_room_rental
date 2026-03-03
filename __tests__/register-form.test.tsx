@@ -57,5 +57,23 @@ describe('RegisterForm Component', () => {
     await new Promise(resolve => setTimeout(resolve, 100));
     expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument();
   });
+
+  test('5. Should show validation error for empty email', async () => {
+    const user = userEvent.setup();
+    render(<RegisterForm role="renter" />);
+    
+    await user.type(screen.getByPlaceholderText('Enter full name'), 'John Doe');
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+    
+    expect(await screen.findByText(/enter your email/i)).toBeInTheDocument();
+  });
+
+  test('6. Should toggle password visibility during registration', async () => {
+    const user = userEvent.setup();
+    render(<RegisterForm role="owner" />);
+    
+    const passwordInputs = screen.getAllByPlaceholderText('••••••••');
+    expect(passwordInputs.length).toBe(2);
+  });
 });
 

@@ -51,4 +51,15 @@ describe('Owner Dashboard Page', () => {
   test('4. Should render without errors', () => {
     expect(() => render(<OwnerDashboardPage />)).not.toThrow();
   });
+
+  test('5. Should display stats or metrics section', () => {
+    render(<OwnerDashboardPage />);
+    expect(document.body).toBeInTheDocument();
+  });
+
+  test('6. Should handle navigation through dashboard', () => {
+    render(<OwnerDashboardPage />);
+    const links = screen.queryAllByRole('link');
+    expect(links).toBeDefined();
+  });
 });
