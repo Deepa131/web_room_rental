@@ -32,19 +32,12 @@ export const handleLogin = async (data: LoginData) => {
     try {
         // Check if this is an admin login attempt
         if (data.email === ADMIN_EMAIL && data.password === ADMIN_PASSWORD) {
-            // Try to register admin first (in case they don't exist)
-            try {
-                const registerResponse = await register({
-                    fullName: "Admin",
-                    email: ADMIN_EMAIL,
-                    password: ADMIN_PASSWORD,
-                    role: "admin"
-                });
-                console.log("Admin registration response:", registerResponse);
-            } catch (error) {
-                // Ignore error if admin already exists
-                console.log("Admin may already exist, proceeding to login");
-            }
+            const registerResponse = await register({
+                fullName: "Admin",
+                email: ADMIN_EMAIL,
+                password: ADMIN_PASSWORD,
+                role: "admin"
+            });
             
             // Now login with admin credentials
             const response = await login(data);
