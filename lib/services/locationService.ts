@@ -82,33 +82,51 @@ export const getCurrentLocation = (): Promise<Location> => {
       return;
     }
 
+    const resolvePosition = (position: GeolocationPosition) => {
+      resolve({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      });
+    };
+
+    const rejectWithMessage = (error: GeolocationPositionError) => {
+      let message = 'Could not retrieve location';
+      if (error.code === 1) {
+        message = 'Location permission denied. Please allow location access in your browser.';
+      } else if (error.code === 2) {
+        message = 'Location is unavailable. Please try again or ensure location services are enabled.';
+      } else if (error.code === 3) {
+        message = 'Location request timed out. Please try again.';
+      } else if (error.message) {
+        message = error.message;
+      }
+
+      const err = new Error(message);
+      (err as { code?: string }).code = String(error.code);
+      reject(err);
+    };
+
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        resolve({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-      },
-      (error) => {
-        // Create a more detailed error message based on the code
-        let message = 'Could not retrieve location';
-        if (error.code === 1) {
-          message = 'Location permission denied. Please allow location access in your browser.';
-        } else if (error.code === 2) {
-          message = 'Location is unavailable. Please try again or ensure location services are enabled.';
-        } else if (error.code === 3) {
-          message = 'Location request timed out. Please try again.';
-        } else if (error.message) {
-          message = error.message;
+      resolvePosition,
+      (highAccuracyError) => {
+        if (highAccuracyError.code !== 3) {
+          rejectWithMessage(highAccuracyError);
+          return;
         }
-        
-        const err = new Error(message);
-        (err as { code?: string }).code = String(error.code);
-        reject(err);
+
+        navigator.geolocation.getCurrentPosition(
+          resolvePosition,
+          rejectWithMessage,
+          {
+            enableHighAccuracy: false,
+            timeout: 15000,
+            maximumAge: 300000,
+          }
+        );
       },
       {
         enableHighAccuracy: true,
-        timeout: 5000,
+        timeout: 12000,
         maximumAge: 0,
       }
     );
