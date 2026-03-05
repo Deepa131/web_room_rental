@@ -119,7 +119,12 @@ export default function LocationPicker({
       }
       
       toast.error(message, { id: permissionToastId });
-      console.error("Location error:", error?.message || error);
+      const isTimeoutError = error?.code === "3" || /timed out/i.test(error?.message || "");
+      if (isTimeoutError) {
+        console.warn("Location timeout:", error?.message || error);
+      } else {
+        console.error("Location error:", error?.message || error);
+      }
     } finally {
       setLoading(false);
       setShowPermissionModal(false);
