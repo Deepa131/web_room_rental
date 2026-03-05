@@ -19,9 +19,6 @@ axiosInstance.interceptors.request.use(
             
             if (localToken) {
                 config.headers.Authorization = `Bearer ${localToken}`;
-                console.log('Token found in localStorage, setting Authorization header');
-            } else {
-                console.log('No token found in localStorage');
             }
         }
         
