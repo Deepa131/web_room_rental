@@ -13,6 +13,8 @@ const config = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   testMatch: ['**/__tests__/**/*.test.[jt]s?(x)'],
+  forceExit: true,
+  testTimeout: 10000,
 }
 
 module.exports = createJestConfig(config)
